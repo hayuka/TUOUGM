@@ -198,16 +198,12 @@ class AISEO_Admin {
         $lines = preg_split( '/\r\n|\r|\n/', $content );
         $cleaned = array();
         $skip_next_title_line = false;
-        $skip_next_body_heading = false;
-        $first_content_line_processed = false;
 
         foreach ( $lines as $line ) {
             $trimmed = trim( $line );
 
             if ( '' === $trimmed ) {
-                if ( ! $skip_next_title_line && ! $skip_next_body_heading ) {
-                    $cleaned[] = '';
-                }
+                $cleaned[] = '';
                 continue;
             }
 
@@ -221,38 +217,59 @@ class AISEO_Admin {
 
             if ( $skip_next_title_line ) {
                 $skip_next_title_line = false;
-                continue;
+                if ( $this->is_title_line( $line, $title ) ) {
+                    continue;
+                }
             }
 
             if ( preg_match( '/^本文[:：]\s*(.*)$/u', $trimmed, $body_matches ) ) {
                 if ( '' !== $body_matches[1] ) {
                     $cleaned[] = $body_matches[1];
-                } else {
-                    $skip_next_body_heading = true;
                 }
                 continue;
             }
 
-            if ( $skip_next_body_heading ) {
-                $skip_next_body_heading = false;
-                if ( preg_match( '/^#{1,6}\s*(.*)$/u', $trimmed, $body_heading_matches ) ) {
-                    $normalized_heading = trim( $body_heading_matches[1] );
-                    if ( $normalized_heading === $title ) {
-                        continue;
-                    }
-                }
-            }
-
-            if ( ! $first_content_line_processed && preg_match( '/^#{1,6}\s*(.*)$/u', $trimmed, $heading_matches ) ) {
-                $first_content_line_processed = true;
-                continue;
-            }
-
-            $first_content_line_processed = true;
             $cleaned[] = $line;
         }
 
+        while ( ! empty( $cleaned ) ) {
+            $first_line = trim( $cleaned[0] );
+            if ( '' === $first_line ) {
+                array_shift( $cleaned );
+                continue;
+            }
+
+            if ( $this->is_title_line( $first_line, $title ) ) {
+                array_shift( $cleaned );
+                continue;
+            }
+
+            break;
+        }
+
         return trim( implode( "\n", $cleaned ) );
+    }
+
+    private function is_title_line( $line, $title ) {
+        $normalized_line = $this->normalize_text( $line );
+        $normalized_title = $this->normalize_text( $title );
+
+        if ( $normalized_line === $normalized_title ) {
+            return true;
+        }
+
+        if ( preg_match( '/^#{1,6}\s*(.*)$/u', trim( $line ), $matches ) ) {
+            return $this->normalize_text( $matches[1] ) === $normalized_title;
+        }
+
+        return false;
+    }
+
+    private function normalize_text( $text ) {
+        $text = trim( $text );
+        $text = preg_replace( '/^#+\s*/', '', $text );
+        $text = preg_replace( '/\s+/u', ' ', $text );
+        return mb_strtolower( $text, 'UTF-8' );
     }
 
     private function convert_markdown_headings_to_html( $content ) {
