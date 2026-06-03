@@ -16,7 +16,7 @@ define( 'AISEO_ASSISTANT_FILE', __FILE__ );
 define( 'AISEO_ASSISTANT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AISEO_ASSISTANT_URL', plugin_dir_url( __FILE__ ) );
 
-require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-openai-client.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-gemini-client.php';
 require_once AISEO_ASSISTANT_DIR . 'admin/class-aiseo-admin.php';
 
 function aiseo_assistant_init() {

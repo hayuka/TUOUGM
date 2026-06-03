@@ -8,13 +8,13 @@ WordPressでAI記事を自動生成し、下書き保存するプラグイン
 
 * WordPress Plugin
 * PHP
-* OpenAI API
+* Gemini API
 * Gutenberg対応
 
 ## MVP機能
 
 * APIキー設定
-* OpenAI接続テスト
+* Gemini接続テスト
 * キーワード入力
 * 記事タイプ選択
 * AI記事生成

@@ -6,13 +6,13 @@ AI SEO Assistant
 
 ## 概要
 
-本プロジェクトの根幹は、WordPress向けのAIによる自動記事生成用プラグインを作成することです。ユーザーが設定したキーワードと記事タイプに応じて、OpenAI APIを利用して記事を生成し、WordPressの下書きとして保存します。
+本プロジェクトの根幹は、WordPress向けのAIによる自動記事生成用プラグインを作成することです。ユーザーが設定したキーワードと記事タイプに応じて、Gemini APIを利用して記事を生成し、WordPressの下書きとして保存します。
 
 ## 目的
 
 - WordPress管理画面からAI記事を生成できる仕組みを提供する
 - 生成した記事をWordPressの下書きとして保存し、編集や公開に備える
-- OpenAI API連携により、高品質なSEO向けコンテンツを自動生成する
+- Gemini API連携により、高品質なSEO向けコンテンツを自動生成する
 
 ## 対象ユーザー
 
@@ -24,19 +24,19 @@ AI SEO Assistant
 
 - WordPress Plugin
 - PHP
-- OpenAI API
+- Gemini API
 - Gutenberg対応
 
 ## 機能要件
 
 ### 1. APIキー設定
 
-- WordPress管理画面の設定ページでOpenAI APIキーを入力・保存できる
+- WordPress管理画面の設定ページでGemini APIキーを入力・保存できる
 - 保存したAPIキーはWordPressオプションとして安全に保持される
 
-### 2. OpenAI接続テスト
+### 2. Gemini接続テスト
 
-- 入力したAPIキーでOpenAIへの接続テストを実行できる
+- 入力したAPIキーでGeminiへの接続テストを実行できる
 - 接続結果を管理画面に表示し、成功・失敗のメッセージを出力する
 
 ### 3. キーワード入力
@@ -51,7 +51,7 @@ AI SEO Assistant
 
 ### 5. AI記事生成
 
-- OpenAI APIを呼び出し、指定キーワードと記事タイプに基づく記事本文を生成する
+- Gemini APIを呼び出し、指定キーワードと記事タイプに基づく記事本文を生成する
 - 生成した記事をプレビュー表示できる
 
 ### 6. WordPress下書き保存
@@ -68,7 +68,7 @@ AI SEO Assistant
 
 ## MVP範囲
 
-- OpenAI APIキーの設定
+- Gemini APIキーの設定
 - 接続テスト機能
 - キーワード入力フォーム
 - 記事タイプ選択機能
@@ -100,5 +100,5 @@ ai-seo-assistant/
 ## 制約・前提
 
 - 本プラグインはWordPressの管理画面から操作するUIを前提とする
-- OpenAI APIの利用には別途ユーザー自身のAPIキーが必要である
+- Gemini APIの利用には別途ユーザー自身のAPIキーが必要である
 - AI生成コンテンツの最終チェックと公開判断はユーザー側が行う

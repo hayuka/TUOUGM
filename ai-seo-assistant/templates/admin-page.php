@@ -38,12 +38,12 @@ if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
 
             <table class="form-table" role="presentation">
                 <tr>
-                    <th scope="row"><label for="openai_api_key">OpenAI APIキー</label></th>
+                    <th scope="row"><label for="gemini_api_key">Gemini APIキー</label></th>
                     <td>
                         <input
                             type="password"
-                            id="openai_api_key"
-                            name="openai_api_key"
+                            id="gemini_api_key"
+                            name="gemini_api_key"
                             value="<?php echo esc_attr( $api_key ); ?>"
                             class="regular-text"
                             autocomplete="off"
@@ -58,7 +58,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
         <form method="post" action="">
             <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
             <input type="hidden" name="aiseo_action" value="test_connection">
-            <?php submit_button( 'OpenAI接続テスト', 'secondary' ); ?>
+            <?php submit_button( 'Gemini接続テスト', 'secondary' ); ?>
         </form>
     <?php else : ?>
         <form method="post" action="">

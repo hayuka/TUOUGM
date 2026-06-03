@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class AISEO_Admin {
-    const OPTION_API_KEY = 'aiseo_openai_api_key';
+    const OPTION_API_KEY = 'aiseo_gemini_api_key';
     const NONCE_ACTION = 'aiseo_admin_action';
     const NONCE_NAME = 'aiseo_nonce';
 
@@ -85,14 +85,14 @@ class AISEO_Admin {
     }
 
     private function save_settings() {
-        $api_key = isset( $_POST['openai_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_api_key'] ) ) : '';
+        $api_key = isset( $_POST['gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['gemini_api_key'] ) ) : '';
         update_option( self::OPTION_API_KEY, $api_key, false );
         $this->add_message( 'success', 'APIキーを保存しました。' );
     }
 
     private function test_connection() {
         $api_key = get_option( self::OPTION_API_KEY, '' );
-        $client = new AISEO_OpenAI_Client( $api_key );
+        $client = new AISEO_Gemini_Client( $api_key );
         $result = $client->test_connection();
 
         if ( is_wp_error( $result ) ) {
@@ -100,7 +100,7 @@ class AISEO_Admin {
             return;
         }
 
-        $this->add_message( 'success', 'OpenAI APIへの接続に成功しました。' );
+        $this->add_message( 'success', 'Gemini APIへの接続に成功しました。' );
     }
 
     private function generate_article() {
@@ -116,7 +116,7 @@ class AISEO_Admin {
             $article_type = 'blog';
         }
 
-        $client = new AISEO_OpenAI_Client( get_option( self::OPTION_API_KEY, '' ) );
+        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
         $content = $client->generate_article( $keywords, $article_type );
 
         if ( is_wp_error( $content ) ) {

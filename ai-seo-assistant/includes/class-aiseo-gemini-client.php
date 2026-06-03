@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenAI API client for AI SEO Assistant.
+ * Gemini API client for AI SEO Assistant.
  *
  * @package AISEOAssistant
  */
@@ -9,11 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class AISEO_OpenAI_Client {
-    const API_URL = 'https://api.openai.com/v1/responses';
+class AISEO_Gemini_Client {
+    const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
 
     /**
-     * OpenAI API key.
+     * Gemini API key.
      *
      * @var string
      */
@@ -33,11 +33,8 @@ class AISEO_OpenAI_Client {
         }
 
         $response = $this->request(
-            array(
-                'model' => 'gpt-5-mini',
-                'input' => '接続テストです。「OK」とだけ返してください。',
-                'max_output_tokens' => 16,
-            )
+            '接続テストです。「OK」とだけ返してください。',
+            16
         );
 
         if ( is_wp_error( $response ) ) {
@@ -54,11 +51,8 @@ class AISEO_OpenAI_Client {
 
         $prompt = $this->build_prompt( $keywords, $article_type );
         $response = $this->request(
-            array(
-                'model' => 'gpt-5-mini',
-                'input' => $prompt,
-                'max_output_tokens' => 2200,
-            )
+            $prompt,
+            2200
         );
 
         if ( is_wp_error( $response ) ) {
@@ -68,19 +62,34 @@ class AISEO_OpenAI_Client {
         $content = $this->extract_text( $response );
 
         if ( '' === $content ) {
-            return new WP_Error( 'aiseo_empty_response', 'OpenAIから記事本文を取得できませんでした。' );
+            return new WP_Error( 'aiseo_empty_response', 'Geminiから記事本文を取得できませんでした。' );
         }
 
         return $content;
     }
 
-    private function request( $body ) {
+    private function request( $prompt, $max_output_tokens ) {
+        $body = array(
+            'contents' => array(
+                array(
+                    'parts' => array(
+                        array(
+                            'text' => $prompt,
+                        ),
+                    ),
+                ),
+            ),
+            'generationConfig' => array(
+                'maxOutputTokens' => $max_output_tokens,
+            ),
+        );
+
         $response = wp_remote_post(
             self::API_URL,
             array(
                 'timeout' => 60,
                 'headers' => array(
-                    'Authorization' => 'Bearer ' . $this->api_key,
+                    'x-goog-api-key' => $this->api_key,
                     'Content-Type' => 'application/json',
                 ),
                 'body' => wp_json_encode( $body ),
@@ -95,36 +104,32 @@ class AISEO_OpenAI_Client {
         $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( 200 > $status_code || 300 <= $status_code ) {
-            $message = isset( $body_json['error']['message'] ) ? $body_json['error']['message'] : 'OpenAI APIへの接続に失敗しました。';
-            return new WP_Error( 'aiseo_openai_error', $message );
+            $message = isset( $body_json['error']['message'] ) ? $body_json['error']['message'] : 'Gemini APIへの接続に失敗しました。';
+            return new WP_Error( 'aiseo_gemini_error', $message );
         }
 
         if ( ! is_array( $body_json ) ) {
-            return new WP_Error( 'aiseo_invalid_response', 'OpenAI APIのレスポンス形式が不正です。' );
+            return new WP_Error( 'aiseo_invalid_response', 'Gemini APIのレスポンス形式が不正です。' );
         }
 
         return $body_json;
     }
 
     private function extract_text( $response ) {
-        if ( isset( $response['output_text'] ) && is_string( $response['output_text'] ) ) {
-            return trim( $response['output_text'] );
-        }
-
-        if ( empty( $response['output'] ) || ! is_array( $response['output'] ) ) {
+        if ( empty( $response['candidates'] ) || ! is_array( $response['candidates'] ) ) {
             return '';
         }
 
         $texts = array();
 
-        foreach ( $response['output'] as $output ) {
-            if ( empty( $output['content'] ) || ! is_array( $output['content'] ) ) {
+        foreach ( $response['candidates'] as $candidate ) {
+            if ( empty( $candidate['content']['parts'] ) || ! is_array( $candidate['content']['parts'] ) ) {
                 continue;
             }
 
-            foreach ( $output['content'] as $content ) {
-                if ( isset( $content['text'] ) && is_string( $content['text'] ) ) {
-                    $texts[] = $content['text'];
+            foreach ( $candidate['content']['parts'] as $part ) {
+                if ( isset( $part['text'] ) && is_string( $part['text'] ) ) {
+                    $texts[] = $part['text'];
                 }
             }
         }
