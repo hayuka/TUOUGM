@@ -17,6 +17,7 @@ class AISEO_Admin {
     private $messages = array();
     private $generated_content = '';
     private $generated_title = '';
+    private $selected_tone = 'standard';
     private $active_tab = 'generate';
 
     public function __construct() {
@@ -76,9 +77,11 @@ class AISEO_Admin {
     public function render_page() {
         $api_key = get_option( self::OPTION_API_KEY, '' );
         $article_types = $this->get_article_types();
+        $tones = $this->get_tones();
         $messages = $this->messages;
         $generated_content = $this->generated_content;
         $generated_title = $this->generated_title;
+        $selected_tone = $this->selected_tone;
         $active_tab = $this->active_tab;
 
         require AISEO_ASSISTANT_DIR . 'templates/admin-page.php';
@@ -112,12 +115,18 @@ class AISEO_Admin {
             return;
         }
 
+        $tone = isset( $_POST['tone'] ) ? sanitize_key( wp_unslash( $_POST['tone'] ) ) : 'standard';
+        if ( ! array_key_exists( $tone, $this->get_tones() ) ) {
+            $tone = 'standard';
+        }
+        $this->selected_tone = $tone;
+
         if ( ! array_key_exists( $article_type, $this->get_article_types() ) ) {
             $article_type = 'blog';
         }
 
         $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
-        $content = $client->generate_article( $keywords, $article_type );
+        $content = $client->generate_article( $keywords, $article_type, $tone );
 
         if ( is_wp_error( $content ) ) {
             $this->add_message( 'error', '記事生成に失敗しました: ' . $content->get_error_message() );
@@ -125,7 +134,7 @@ class AISEO_Admin {
         }
 
         $this->generated_title = $this->extract_title( $content, $keywords );
-        $content = $this->normalize_generated_content( $content );
+        $content = $this->normalize_generated_content( $content, $this->generated_title );
         $this->generated_content = $content;
         $this->add_message( 'success', '記事を生成しました。内容を確認して下書き保存できます。' );
     }
@@ -176,16 +185,27 @@ class AISEO_Admin {
         );
     }
 
-    private function normalize_generated_content( $content ) {
+    private function get_tones() {
+        return array(
+            'standard' => '標準',
+            'friendly' => '親しみやすい',
+            'professional' => '専門的・信頼',
+            'clear' => '分かりやすい',
+        );
+    }
+
+    private function normalize_generated_content( $content, $title ) {
         $lines = preg_split( '/\r\n|\r|\n/', $content );
         $cleaned = array();
         $skip_next_title_line = false;
+        $skip_next_body_heading = false;
+        $first_content_line_processed = false;
 
         foreach ( $lines as $line ) {
             $trimmed = trim( $line );
 
             if ( '' === $trimmed ) {
-                if ( ! $skip_next_title_line ) {
+                if ( ! $skip_next_title_line && ! $skip_next_body_heading ) {
                     $cleaned[] = '';
                 }
                 continue;
@@ -207,10 +227,28 @@ class AISEO_Admin {
             if ( preg_match( '/^本文[:：]\s*(.*)$/u', $trimmed, $body_matches ) ) {
                 if ( '' !== $body_matches[1] ) {
                     $cleaned[] = $body_matches[1];
+                } else {
+                    $skip_next_body_heading = true;
                 }
                 continue;
             }
 
+            if ( $skip_next_body_heading ) {
+                $skip_next_body_heading = false;
+                if ( preg_match( '/^#{1,6}\s*(.*)$/u', $trimmed, $body_heading_matches ) ) {
+                    $normalized_heading = trim( $body_heading_matches[1] );
+                    if ( $normalized_heading === $title ) {
+                        continue;
+                    }
+                }
+            }
+
+            if ( ! $first_content_line_processed && preg_match( '/^#{1,6}\s*(.*)$/u', $trimmed, $heading_matches ) ) {
+                $first_content_line_processed = true;
+                continue;
+            }
+
+            $first_content_line_processed = true;
             $cleaned[] = $line;
         }
 
@@ -241,12 +279,12 @@ class AISEO_Admin {
             }
 
             if ( $next_line_is_title ) {
-                return wp_trim_words( wp_strip_all_tags( $line ), 50, '' );
+                return $this->sanitize_title( $line );
             }
 
             if ( preg_match( '/^タイトル[:：]\s*(.*)$/u', $line, $matches ) ) {
                 if ( '' !== $matches[1] ) {
-                    return wp_trim_words( wp_strip_all_tags( $matches[1] ), 50, '' );
+                    return $this->sanitize_title( $matches[1] );
                 }
 
                 $next_line_is_title = true;
@@ -257,10 +295,20 @@ class AISEO_Admin {
                 break;
             }
 
-            return wp_trim_words( wp_strip_all_tags( $line ), 50, '' );
+            if ( preg_match( '/^#{1,6}\s*(.*)$/u', $line, $heading_matches ) ) {
+                return $this->sanitize_title( $heading_matches[1] );
+            }
+
+            return $this->sanitize_title( $line );
         }
 
         return $fallback;
+    }
+
+    private function sanitize_title( $title ) {
+        $title = trim( $title );
+        $title = preg_replace( '/^#+\s*/', '', $title );
+        return wp_trim_words( wp_strip_all_tags( $title ), 50, '' );
     }
 
     private function add_message( $type, $message ) {

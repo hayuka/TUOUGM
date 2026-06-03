@@ -20,8 +20,16 @@ class AISEO_Gemini_Client {
      */
     private $api_key;
 
-    public function __construct( $api_key ) {
+    /**
+     * Prompt builder.
+     *
+     * @var AISEO_Prompt_Builder
+     */
+    private $prompt_builder;
+
+    public function __construct( $api_key, AISEO_Prompt_Builder $prompt_builder = null ) {
         $this->api_key = trim( (string) $api_key );
+        $this->prompt_builder = $prompt_builder ? $prompt_builder : new AISEO_Prompt_Builder();
     }
 
     public function has_api_key() {
@@ -45,14 +53,14 @@ class AISEO_Gemini_Client {
         return true;
     }
 
-    public function generate_article( $keywords, $article_type ) {
+    public function generate_article( $keywords, $article_type, $tone = 'standard' ) {
         if ( ! $this->has_api_key() ) {
             return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
         }
 
-        $prompt = $this->build_prompt( $keywords, $article_type );
+        $prompt_parts = $this->build_prompt_parts( $keywords, $article_type, $tone );
         $response = $this->request(
-            $prompt,
+            $prompt_parts,
             self::MAX_OUTPUT_TOKENS
         );
 
@@ -69,17 +77,20 @@ class AISEO_Gemini_Client {
         return $content;
     }
 
-    private function request( $prompt, $max_output_tokens ) {
-        $body = array(
-            'contents' => array(
-                array(
-                    'parts' => array(
-                        array(
-                            'text' => $prompt,
-                        ),
+    private function request( $prompt_parts, $max_output_tokens ) {
+        $contents = array();
+        foreach ( $prompt_parts as $prompt_text ) {
+            $contents[] = array(
+                'parts' => array(
+                    array(
+                        'text' => $prompt_text,
                     ),
                 ),
-            ),
+            );
+        }
+
+        $body = array(
+            'contents' => $contents,
             'generationConfig' => array(
                 'maxOutputTokens' => $max_output_tokens,
             ),
@@ -138,19 +149,10 @@ class AISEO_Gemini_Client {
         return trim( implode( "\n", $texts ) );
     }
 
-    private function build_prompt( $keywords, $article_type ) {
-        $type_labels = array(
-            'blog' => 'ブログ記事',
-            'list' => 'リスト記事',
-            'howto' => 'ハウツー記事',
-        );
-
-        $type_label = isset( $type_labels[ $article_type ] ) ? $type_labels[ $article_type ] : $type_labels['blog'];
-
-        return sprintf(
-            "あなたは日本語SEO記事の編集者です。\nキーワード: %s\n記事タイプ: %s\n\n条件:\n- WordPress投稿用の記事を作成する\n- タイトルを1つ提案する\n- 導入文、見出し、本文、まとめを含める\n- 読者に分かりやすい自然な日本語にする\n- 誇張や根拠のない断定を避ける\n- HTMLではなく、Gutenbergで扱いやすいプレーンテキストと見出し記法で出力する\n- 文章は最後まで切れずに完結させる\n\n出力形式:\nタイトル:\n\n本文:\n",
-            $keywords,
-            $type_label
+    private function build_prompt_parts( $keywords, $article_type, $tone ) {
+        return array(
+            $this->prompt_builder->get_system_prompt(),
+            $this->prompt_builder->build_user_prompt( $keywords, $article_type, $tone ),
         );
     }
 }

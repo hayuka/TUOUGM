@@ -89,6 +89,16 @@ if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
                         </select>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row"><label for="tone">出力トーン</label></th>
+                    <td>
+                        <select id="tone" name="tone">
+                            <?php foreach ( $tones as $value => $label ) : ?>
+                                <option value="<?php echo esc_attr( $value ); ?>" <?php selected( $selected_tone, $value ); ?>><?php echo esc_html( $label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
             </table>
 
             <?php submit_button( '記事を生成' ); ?>
