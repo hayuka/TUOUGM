@@ -125,6 +125,7 @@ class AISEO_Admin {
         }
 
         $this->generated_title = $this->extract_title( $content, $keywords );
+        $content = $this->normalize_generated_content( $content );
         $this->generated_content = $content;
         $this->add_message( 'success', '記事を生成しました。内容を確認して下書き保存できます。' );
     }
@@ -137,6 +138,8 @@ class AISEO_Admin {
             $this->add_message( 'error', '下書き保存するタイトルと本文がありません。' );
             return;
         }
+
+        $content = $this->convert_markdown_headings_to_html( $content );
 
         $post_id = wp_insert_post(
             array(
@@ -173,8 +176,62 @@ class AISEO_Admin {
         );
     }
 
+    private function normalize_generated_content( $content ) {
+        $lines = preg_split( '/\r\n|\r|\n/', $content );
+        $cleaned = array();
+        $skip_next_title_line = false;
+
+        foreach ( $lines as $line ) {
+            $trimmed = trim( $line );
+
+            if ( '' === $trimmed ) {
+                if ( ! $skip_next_title_line ) {
+                    $cleaned[] = '';
+                }
+                continue;
+            }
+
+            if ( preg_match( '/^タイトル[:：]\s*(.*)$/u', $trimmed, $matches ) ) {
+                if ( '' === $matches[1] ) {
+                    $skip_next_title_line = true;
+                    continue;
+                }
+                continue;
+            }
+
+            if ( $skip_next_title_line ) {
+                $skip_next_title_line = false;
+                continue;
+            }
+
+            if ( preg_match( '/^本文[:：]\s*(.*)$/u', $trimmed, $body_matches ) ) {
+                if ( '' !== $body_matches[1] ) {
+                    $cleaned[] = $body_matches[1];
+                }
+                continue;
+            }
+
+            $cleaned[] = $line;
+        }
+
+        return trim( implode( "\n", $cleaned ) );
+    }
+
+    private function convert_markdown_headings_to_html( $content ) {
+        $lines = preg_split( '/\r\n|\r|\n/', $content );
+        foreach ( $lines as &$line ) {
+            if ( preg_match( '/^(#{1,6})\s+(.+)$/', $line, $matches ) ) {
+                $level = min( 6, strlen( $matches[1] ) );
+                $text = esc_html( trim( $matches[2] ) );
+                $line = sprintf( '<h%d>%s</h%d>', $level, $text, $level );
+            }
+        }
+        return implode( "\n", $lines );
+    }
+
     private function extract_title( $content, $fallback ) {
         $lines = preg_split( '/\r\n|\r|\n/', $content );
+        $next_line_is_title = false;
 
         foreach ( $lines as $line ) {
             $line = trim( $line );
@@ -183,11 +240,24 @@ class AISEO_Admin {
                 continue;
             }
 
-            if ( 0 === strpos( $line, 'タイトル:' ) ) {
-                return trim( substr( $line, strlen( 'タイトル:' ) ) );
+            if ( $next_line_is_title ) {
+                return wp_trim_words( wp_strip_all_tags( $line ), 50, '' );
             }
 
-            return wp_trim_words( wp_strip_all_tags( $line ), 20, '' );
+            if ( preg_match( '/^タイトル[:：]\s*(.*)$/u', $line, $matches ) ) {
+                if ( '' !== $matches[1] ) {
+                    return wp_trim_words( wp_strip_all_tags( $matches[1] ), 50, '' );
+                }
+
+                $next_line_is_title = true;
+                continue;
+            }
+
+            if ( preg_match( '/^本文[:：]\s*$/u', $line ) ) {
+                break;
+            }
+
+            return wp_trim_words( wp_strip_all_tags( $line ), 50, '' );
         }
 
         return $fallback;

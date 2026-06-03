@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AISEO_Gemini_Client {
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+    const MAX_OUTPUT_TOKENS = 3600;
 
     /**
      * Gemini API key.
@@ -52,7 +53,7 @@ class AISEO_Gemini_Client {
         $prompt = $this->build_prompt( $keywords, $article_type );
         $response = $this->request(
             $prompt,
-            2200
+            self::MAX_OUTPUT_TOKENS
         );
 
         if ( is_wp_error( $response ) ) {
@@ -147,7 +148,7 @@ class AISEO_Gemini_Client {
         $type_label = isset( $type_labels[ $article_type ] ) ? $type_labels[ $article_type ] : $type_labels['blog'];
 
         return sprintf(
-            "あなたは日本語SEO記事の編集者です。\nキーワード: %s\n記事タイプ: %s\n\n条件:\n- WordPress投稿用の記事を作成する\n- タイトルを1つ提案する\n- 導入文、見出し、本文、まとめを含める\n- 読者に分かりやすい自然な日本語にする\n- 誇張や根拠のない断定を避ける\n- HTMLではなく、Gutenbergで扱いやすいプレーンテキストと見出し記法で出力する\n\n出力形式:\nタイトル: ...\n\n本文:\n...",
+            "あなたは日本語SEO記事の編集者です。\nキーワード: %s\n記事タイプ: %s\n\n条件:\n- WordPress投稿用の記事を作成する\n- タイトルを1つ提案する\n- 導入文、見出し、本文、まとめを含める\n- 読者に分かりやすい自然な日本語にする\n- 誇張や根拠のない断定を避ける\n- HTMLではなく、Gutenbergで扱いやすいプレーンテキストと見出し記法で出力する\n- 文章は最後まで切れずに完結させる\n\n出力形式:\nタイトル:\n\n本文:\n",
             $keywords,
             $type_label
         );
