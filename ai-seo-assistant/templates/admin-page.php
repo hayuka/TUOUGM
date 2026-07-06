@@ -248,7 +248,9 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                         <td>
                             <select id="image_size" name="image_size">
                                 <option value="512x512">512x512</option>
+                                <option value="1024x768">1024x768</option>
                                 <option value="1024x1024" selected>1024x1024</option>
+                                <option value="2048x1536">2048x1536</option>
                                 <option value="2048x2048">2048x2048</option>
                             </select>
                         </td>
