@@ -212,12 +212,11 @@ class AISEO_Gemini_Client {
             return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
         }
 
-        $image_api = 'https://generativelanguage.googleapis.com/v1beta/models/image-bison-001:generate';
+        $image_api = 'https://generativelanguage.googleapis.com/v1beta/images:generate';
 
         $body = array(
-            'prompt' => array(
-                'text' => $prompt,
-            ),
+            'model' => 'image-bison-001',
+            'prompt' => (string) $prompt,
             'size' => $size,
         );
 
