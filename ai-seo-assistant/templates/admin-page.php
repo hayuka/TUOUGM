@@ -197,7 +197,8 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
             <h2>生成結果</h2>
             <form method="post" action="">
                 <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
-                <input type="hidden" name="aiseo_action" value="save_draft">
+                <input type="hidden" name="generated_title" value="<?php echo esc_attr( $generated_title ); ?>">
+                <input type="hidden" id="image_action_hidden" name="image_action" value="preview">
 
                 <table class="form-table" role="presentation">
                     <tr>
@@ -226,42 +227,40 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                         </td>
                     </tr>
                 </table>
-                    <p>
-                        <?php submit_button( '下書き保存' ); ?>
-                    </p>
-                </form>
 
-                <form method="post" action="">
-                    <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
-                    <input type="hidden" name="aiseo_action" value="run_booster">
-                    <input type="hidden" name="generated_title" value="<?php echo esc_attr( $generated_title ); ?>">
-                    <input type="hidden" name="generated_content" value="<?php echo esc_attr( $generated_content ); ?>">
-                    <?php submit_button( 'オリジナル性ブースターを実行', 'secondary' ); ?>
-                </form>
+                <h3>画像生成</h3>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
+                        <td>
+                            <input
+                                type="text"
+                                id="image_prompt"
+                                name="image_prompt"
+                                class="regular-text"
+                                placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真"
+                                value="<?php echo esc_attr( $generated_image_prompt ); ?>"
+                            >
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="image_size">サイズ</label></th>
+                        <td>
+                            <select id="image_size" name="image_size">
+                                <option value="512x512">512x512</option>
+                                <option value="1024x1024" selected>1024x1024</option>
+                                <option value="2048x2048">2048x2048</option>
+                            </select>
+                        </td>
+                    </tr>
+                </table>
 
-                <form method="post" action="">
-                    <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
-                    <input type="hidden" name="aiseo_action" value="generate_image">
-                    <table class="form-table" role="presentation">
-                        <tr>
-                            <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
-                            <td>
-                                <input type="text" id="image_prompt" name="image_prompt" class="regular-text" placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row"><label for="image_size">サイズ</label></th>
-                            <td>
-                                <select id="image_size" name="image_size">
-                                    <option value="512x512">512x512</option>
-                                    <option value="1024x1024" selected>1024x1024</option>
-                                    <option value="2048x2048">2048x2048</option>
-                                </select>
-                            </td>
-                        </tr>
-                    </table>
-                    <?php submit_button( '画像を生成', 'secondary' ); ?>
-                </form>
+                <p>
+                    <button type="submit" name="aiseo_action" value="save_draft" class="button button-primary">下書き保存</button>
+                    <button type="submit" name="aiseo_action" value="run_booster" class="button button-secondary">オリジナル性ブースターを実行</button>
+                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary">画像プレビュー</button>
+                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_action_hidden').value='embed';">本文に画像を埋め込む</button>
+                </p>
             </form>
         <?php endif; ?>
     <?php endif; ?>

@@ -24,6 +24,7 @@ class AISEO_Admin {
     private $messages = array();
     private $generated_content = '';
     private $generated_title = '';
+    private $generated_image_prompt = '';
     private $selected_tone = 'standard';
     private $active_tab = 'generate';
 
@@ -106,6 +107,7 @@ class AISEO_Admin {
         $messages = $this->messages;
         $generated_content = $this->generated_content;
         $generated_title = $this->generated_title;
+        $generated_image_prompt = $this->generated_image_prompt;
         $selected_tone = $this->selected_tone;
         $active_tab = $this->active_tab;
         $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
@@ -177,6 +179,15 @@ class AISEO_Admin {
         $this->generated_title = $this->extract_title( $content, $keywords );
         $content = $this->normalize_generated_content( $content, $this->generated_title );
         $this->generated_content = $content;
+
+        $image_prompt = $client->generate_image_prompt( $content );
+        if ( ! is_wp_error( $image_prompt ) ) {
+            $this->generated_image_prompt = $image_prompt;
+        } else {
+            $this->generated_image_prompt = '';
+            $this->add_message( 'warning', '画像生成プロンプトの自動作成に失敗しました: ' . $image_prompt->get_error_message() );
+        }
+
         $this->add_message( 'success', '記事を生成しました。内容を確認して下書き保存できます。' );
     }
 
@@ -280,6 +291,10 @@ class AISEO_Admin {
     private function generate_image() {
         $prompt = isset( $_POST['image_prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['image_prompt'] ) ) : '';
         $size = isset( $_POST['image_size'] ) ? sanitize_text_field( wp_unslash( $_POST['image_size'] ) ) : '1024x1024';
+        $image_action = isset( $_POST['image_action'] ) ? sanitize_key( wp_unslash( $_POST['image_action'] ) ) : 'preview';
+        $this->generated_title = isset( $_POST['generated_title'] ) ? sanitize_text_field( wp_unslash( $_POST['generated_title'] ) ) : $this->generated_title;
+        $this->generated_content = isset( $_POST['generated_content'] ) ? wp_kses_post( wp_unslash( $_POST['generated_content'] ) ) : $this->generated_content;
+        $this->generated_image_prompt = isset( $_POST['image_prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['image_prompt'] ) ) : $this->generated_image_prompt;
 
         if ( '' === $prompt ) {
             $this->add_message( 'error', '画像生成用のプロンプトを入力してください。' );
@@ -294,9 +309,14 @@ class AISEO_Admin {
             return;
         }
 
-        // $result expected to be a data URI
         $img_html = '<div><strong>生成画像プレビュー</strong><br><img src="' . esc_url( $result ) . '" style="max-width:300px;height:auto;border:1px solid #ddd;padding:4px;margin-top:6px;"/></div>';
-        $this->add_message( 'success', $img_html );
+
+        if ( 'embed' === $image_action ) {
+            $this->generated_content = $this->generated_content . "\n\n<img src='" . esc_url( $result ) . "' alt='生成画像'>\n";
+            $this->add_message( 'success', '画像を記事本文に埋め込みました。下書き保存前に内容を確認してください。' );
+        } else {
+            $this->add_message( 'success', $img_html );
+        }
     }
 
     private function get_article_types() {
