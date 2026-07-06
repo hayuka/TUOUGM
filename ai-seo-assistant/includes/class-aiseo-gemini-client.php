@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AISEO_Gemini_Client {
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
     const MAX_OUTPUT_TOKENS = 3600;
+    const REQUEST_TIMEOUT = 120;
 
     /**
      * Gemini API key.
@@ -100,27 +101,45 @@ class AISEO_Gemini_Client {
             ),
         );
 
-        $response = wp_remote_post(
-            self::API_URL,
-            array(
-                'timeout' => 60,
-                'headers' => array(
-                    'x-goog-api-key' => $this->api_key,
-                    'Content-Type' => 'application/json',
-                ),
-                'body' => wp_json_encode( $body ),
-            )
-        );
+        $attempts = 2;
+        $response = null;
 
-        if ( is_wp_error( $response ) ) {
-            return $response;
+        for ( $i = 0; $i < $attempts; $i++ ) {
+            $response = wp_remote_post(
+                self::API_URL,
+                array(
+                    'timeout' => self::REQUEST_TIMEOUT,
+                    'headers' => array(
+                        'x-goog-api-key' => $this->api_key,
+                        'Content-Type' => 'application/json',
+                    ),
+                    'body' => wp_json_encode( $body ),
+                )
+            );
+
+            if ( is_wp_error( $response ) ) {
+                // 最後の試行でなければ短いバックオフして再試行
+                if ( $i + 1 < $attempts ) {
+                    sleep( 1 );
+                    continue;
+                }
+
+                return $response;
+            }
+
+            break;
         }
 
         $status_code = wp_remote_retrieve_response_code( $response );
         $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( 200 > $status_code || 300 <= $status_code ) {
-            $message = isset( $body_json['error']['message'] ) ? $body_json['error']['message'] : 'Gemini APIへの接続に失敗しました。';
+            $message = 'Gemini APIへの接続に失敗しました。';
+            if ( is_array( $body_json ) && isset( $body_json['error']['message'] ) ) {
+                $message = $body_json['error']['message'];
+            } elseif ( is_wp_error( $response ) ) {
+                $message = $response->get_error_message();
+            }
             return new WP_Error( 'aiseo_gemini_error', $message );
         }
 
