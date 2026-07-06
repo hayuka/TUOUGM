@@ -184,7 +184,7 @@ class AISEO_Gemini_Client {
             return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
         }
 
-        $response = $this->request( array( $this->get_system_prompt(), $prompt_text ), $max_output_tokens );
+        $response = $this->request( array( $this->prompt_builder->get_system_prompt(), $prompt_text ), $max_output_tokens );
 
         if ( is_wp_error( $response ) ) {
             return $response;
