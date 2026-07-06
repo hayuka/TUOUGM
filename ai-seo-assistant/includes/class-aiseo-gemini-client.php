@@ -212,16 +212,13 @@ class AISEO_Gemini_Client {
             return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
         }
 
-        // Use a conservative, documented image generation endpoint if available.
-        $image_api = 'https://generativelanguage.googleapis.com/v1beta/models/generative-image:generate';
+        $image_api = 'https://generativelanguage.googleapis.com/v1beta/models/image-bison-001:generate';
 
         $body = array(
             'prompt' => array(
                 'text' => $prompt,
             ),
-            'imageConfig' => array(
-                'size' => $size,
-            ),
+            'size' => $size,
         );
 
         $response = wp_remote_post(
@@ -244,7 +241,12 @@ class AISEO_Gemini_Client {
         $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( 200 > $status_code || 300 <= $status_code ) {
-            $message = isset( $body_json['error']['message'] ) ? $body_json['error']['message'] : '画像生成APIへの接続に失敗しました。';
+            $message = '画像生成APIへの接続に失敗しました。';
+            if ( is_array( $body_json ) && isset( $body_json['error']['message'] ) ) {
+                $message = $body_json['error']['message'];
+            } elseif ( is_string( $body_text = wp_remote_retrieve_body( $response ) ) && '' !== trim( $body_text ) ) {
+                $message = $message . ' ' . wp_trim_words( strip_tags( $body_text ), 30, '...' );
+            }
             return new WP_Error( 'aiseo_image_api_error', $message );
         }
 
@@ -254,11 +256,51 @@ class AISEO_Gemini_Client {
             return 'data:image/png;base64,' . $b64;
         }
 
+        if ( isset( $body_json['artifacts'][0]['image'] ) ) {
+            return 'data:image/png;base64,' . $body_json['artifacts'][0]['image'];
+        }
+
         if ( isset( $body_json['data'][0]['b64_json'] ) ) {
             return 'data:image/png;base64,' . $body_json['data'][0]['b64_json'];
         }
 
+        if ( isset( $body_json['data'][0]['image'] ) ) {
+            return 'data:image/png;base64,' . $body_json['data'][0]['image'];
+        }
+
+        if ( isset( $body_json['image'] ) ) {
+            return 'data:image/png;base64,' . $body_json['image'];
+        }
+
         return new WP_Error( 'aiseo_image_no_data', '画像データがレスポンスに含まれていません。' );
+    }
+
+    /**
+     * Generate an image prompt based on the generated article.
+     *
+     * @param string $article_content
+     * @return string|WP_Error
+     */
+    public function generate_image_prompt( $article_content ) {
+        if ( ! $this->has_api_key() ) {
+            return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
+        }
+
+        $prompt = "以下は記事本文です。この記事に最適な画像生成プロンプトを日本語で1つ生成してください。\n" .
+            "生成プロンプトは画像生成APIに直接渡せる形式にしてください。\n\n" .
+            "記事本文:\n" . trim( (string) $article_content );
+
+        $response = $this->request( array( $this->prompt_builder->get_system_prompt(), $prompt ), 160 );
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $content = $this->extract_text( $response );
+        if ( '' === $content ) {
+            return new WP_Error( 'aiseo_empty_response', 'Geminiから画像生成プロンプトを取得できませんでした。' );
+        }
+
+        return $content;
     }
 
     private function build_prompt_parts( $keywords, $article_type, $tone, array $site_profile = array(), $site_knowledge = '' ) {
