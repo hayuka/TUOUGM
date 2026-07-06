@@ -53,12 +53,12 @@ class AISEO_Gemini_Client {
         return true;
     }
 
-    public function generate_article( $keywords, $article_type, $tone = 'standard', array $site_profile = array() ) {
+    public function generate_article( $keywords, $article_type, $tone = 'standard', array $site_profile = array(), $site_knowledge = '' ) {
         if ( ! $this->has_api_key() ) {
             return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
         }
 
-        $prompt_parts = $this->build_prompt_parts( $keywords, $article_type, $tone, $site_profile );
+        $prompt_parts = $this->build_prompt_parts( $keywords, $article_type, $tone, $site_profile, $site_knowledge );
         $response = $this->request(
             $prompt_parts,
             self::MAX_OUTPUT_TOKENS
@@ -153,10 +153,10 @@ class AISEO_Gemini_Client {
         return trim( implode( "\n", $texts ) );
     }
 
-    private function build_prompt_parts( $keywords, $article_type, $tone, array $site_profile = array() ) {
+    private function build_prompt_parts( $keywords, $article_type, $tone, array $site_profile = array(), $site_knowledge = '' ) {
         return array(
             $this->prompt_builder->get_system_prompt(),
-            $this->prompt_builder->build_user_prompt( $keywords, $article_type, $tone, $site_profile ),
+            $this->prompt_builder->build_user_prompt( $keywords, $article_type, $tone, $site_profile, $site_knowledge ),
         );
     }
 }

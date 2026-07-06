@@ -12,10 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AISEO_Admin {
     const OPTION_API_KEY = 'aiseo_gemini_api_key';
     const OPTION_SITE_PROFILE = 'ai_site_profile';
+    const OPTION_SITE_KNOWLEDGE = 'ai_site_knowledge';
     const OPTION_SITE_PROFILE_UPDATED = 'ai_site_profile_updated';
     const OPTION_SITE_PROFILE_POSTS = 'ai_site_profile_posts';
     const OPTION_SITE_PROFILE_LIMIT = 'aiseo_site_profile_limit';
     const OPTION_SITE_PROFILE_INCLUDE_PAGES = 'aiseo_site_profile_include_pages';
+    const OPTION_SITE_PROFILE_SOURCE = 'aiseo_site_profile_source';
     const NONCE_ACTION = 'aiseo_admin_action';
     const NONCE_NAME = 'aiseo_nonce';
 
@@ -95,10 +97,14 @@ class AISEO_Admin {
         $selected_tone = $this->selected_tone;
         $active_tab = $this->active_tab;
         $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
+        $site_knowledge = get_option( self::OPTION_SITE_KNOWLEDGE, '' );
         $site_profile_updated = get_option( self::OPTION_SITE_PROFILE_UPDATED, '' );
         $site_profile_posts = absint( get_option( self::OPTION_SITE_PROFILE_POSTS, 0 ) );
         $site_profile_limit = absint( get_option( self::OPTION_SITE_PROFILE_LIMIT, 20 ) );
-        $site_profile_include_pages = (bool) get_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, false );
+        $site_profile_source = get_option( self::OPTION_SITE_PROFILE_SOURCE, '' );
+        if ( '' === $site_profile_source ) {
+            $site_profile_source = (bool) get_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, false ) ? 'all' : 'posts';
+        }
         $site_profile_json = ! empty( $site_profile ) ? wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) : '';
 
         require AISEO_ASSISTANT_DIR . 'templates/admin-page.php';
@@ -146,9 +152,10 @@ class AISEO_Admin {
         if ( ! is_array( $site_profile ) ) {
             $site_profile = array();
         }
+        $site_knowledge = get_option( self::OPTION_SITE_KNOWLEDGE, '' );
 
         $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
-        $content = $client->generate_article( $keywords, $article_type, $tone, $site_profile );
+        $content = $client->generate_article( $keywords, $article_type, $tone, $site_profile, $site_knowledge );
 
         if ( is_wp_error( $content ) ) {
             $this->add_message( 'error', '記事生成に失敗しました: ' . $content->get_error_message() );
@@ -163,24 +170,31 @@ class AISEO_Admin {
 
     private function learn_site_profile() {
         $limit = isset( $_POST['site_profile_limit'] ) ? absint( wp_unslash( $_POST['site_profile_limit'] ) ) : 20;
-        $include_pages = ! empty( $_POST['site_profile_include_pages'] );
+        $source = isset( $_POST['site_profile_source'] ) ? sanitize_key( wp_unslash( $_POST['site_profile_source'] ) ) : 'posts';
 
         $limit = max( 1, min( 100, $limit ) );
+        if ( ! in_array( $source, array( 'posts', 'pages', 'all' ), true ) ) {
+            $source = 'posts';
+        }
 
         update_option( self::OPTION_SITE_PROFILE_LIMIT, $limit, false );
-        update_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, $include_pages ? 1 : 0, false );
+        update_option( self::OPTION_SITE_PROFILE_SOURCE, $source, false );
+        update_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, 'all' === $source ? 1 : 0, false );
 
         $analyzer = new AISEO_Site_Profile_Analyzer();
-        $profile = $analyzer->analyze( $limit, $include_pages );
+        $profile = $analyzer->analyze( $limit, $source );
 
         if ( is_wp_error( $profile ) ) {
             $this->add_message( 'error', 'サイトプロファイルの学習に失敗しました: ' . $profile->get_error_message() );
             return;
         }
 
+        $site_knowledge = $analyzer->build_site_knowledge( $profile );
+
         update_option( self::OPTION_SITE_PROFILE, $profile, false );
+        update_option( self::OPTION_SITE_KNOWLEDGE, $site_knowledge, false );
         update_option( self::OPTION_SITE_PROFILE_UPDATED, current_time( 'mysql' ), false );
-        update_option( self::OPTION_SITE_PROFILE_POSTS, isset( $profile['analyzed_posts'] ) ? absint( $profile['analyzed_posts'] ) : 0, false );
+        update_option( self::OPTION_SITE_PROFILE_POSTS, $analyzer->get_last_analyzed_count(), false );
 
         $this->add_message( 'success', 'サイトプロファイルを更新しました。以降の記事生成で既存記事の傾向を参照します。' );
     }

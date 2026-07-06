@@ -174,17 +174,58 @@ WordPress下書き保存
 
 ```json
 {
-  "tone": "professional",
-  "style": "polite",
-  "average_words": 4200,
-  "average_h2": 5,
-  "average_h3": 12,
-  "paragraph_length": 85,
-  "image_per_h2": true,
-  "cta_position": "last",
-  "list_ratio": 0.42,
-  "table_ratio": 0.15,
-  "faq": true
+  "site_identity": {
+    "site_name": "サイト名",
+    "catch_copy": "キャッチコピー",
+    "mission": "",
+    "services": [],
+    "target": "",
+    "brand": {
+      "name": "ブランド名",
+      "tagline": "タグライン"
+    }
+  },
+  "writing_profile": {
+    "writing_style": {
+      "tone": "professional",
+      "style": "polite",
+      "readability": "standard"
+    },
+    "structure": {
+      "average_words": 4200,
+      "average_h2": 5,
+      "average_h3": 12,
+      "paragraph_length": 85
+    },
+    "seo": {
+      "title_tendency": {},
+      "meta_description_ratio": 0.8,
+      "internal_links": 3.2
+    },
+    "cta": {
+      "position": "last",
+      "usage_ratio": 0.65
+    }
+  },
+  "design_profile": {
+    "colors": {
+      "primary": "unknown",
+      "secondary": "unknown",
+      "accent": "unknown"
+    },
+    "layout": {},
+    "blocks": {},
+    "images": {
+      "image_per_h2": true,
+      "size_tendency": "medium"
+    }
+  },
+  "content_profile": {
+    "categories": [],
+    "popular_posts": [],
+    "tags": [],
+    "internal_links": {}
+  }
 }
 ```
 

@@ -41,8 +41,8 @@ class AISEO_Prompt_Builder {
         return isset( $tones[ $tone ] ) ? $tones[ $tone ] : $tones['standard'];
     }
 
-    public function build_user_prompt( $keywords, $article_type, $tone, array $site_profile = array() ) {
-        $profile_instruction = $this->build_site_profile_instruction( $site_profile );
+    public function build_user_prompt( $keywords, $article_type, $tone, array $site_profile = array(), $site_knowledge = '' ) {
+        $profile_instruction = $this->build_site_profile_instruction( $site_profile, $site_knowledge );
 
         return sprintf(
             "キーワード: %s\n" .
@@ -52,8 +52,9 @@ class AISEO_Prompt_Builder {
             "条件:\n" .
             "- タイトルを1つ提示する\n" .
             "- 導入、見出し、本文、まとめを含める\n" .
-            "- サイトプロファイルがある場合は、出力トーンよりもサイトプロファイルを優先する\n" .
-            "- 既存記事の平均見出し数、段落量、文体、CTAやFAQの傾向に近づける\n" .
+            "- Site Knowledgeがある場合は、ユーザー指定テイストよりもSite Knowledgeを優先する\n" .
+            "- Site Knowledgeで不足する情報のみSite Profile(JSON)を参照する\n" .
+            "- サイトの目的、ブランド、ターゲット、文体、CTA、デザイン傾向との一貫性を保つ\n" .
             "- 最終出力に \"タイトル:\" / \"本文:\" のラベルを含めない\n" .
             "- HTMLではなく、Markdown見出し記法で出力する\n" .
             "出力形式:\n" .
@@ -66,17 +67,28 @@ class AISEO_Prompt_Builder {
         );
     }
 
-    private function build_site_profile_instruction( array $site_profile ) {
-        if ( empty( $site_profile ) ) {
+    private function build_site_profile_instruction( array $site_profile, $site_knowledge = '' ) {
+        if ( empty( $site_profile ) && '' === trim( (string) $site_knowledge ) ) {
             return '';
         }
 
-        return "サイトプロファイル(JSON):\n" .
-            wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n" .
-            "サイトプロファイルの使い方:\n" .
-            "- tone/style/readabilityに合わせて文体を調整する\n" .
-            "- average_words/average_h2/average_h3/paragraph_lengthを記事構成の目安にする\n" .
-            "- list_ratio/table_ratio/faq/cta_position/layout/imagesの傾向を必要に応じて反映する\n";
+        $instruction = '';
+
+        if ( '' !== trim( (string) $site_knowledge ) ) {
+            $instruction .= "Site Knowledge(最優先):\n" . trim( (string) $site_knowledge ) . "\n\n";
+        }
+
+        if ( ! empty( $site_profile ) ) {
+            $instruction .= "Site Profile(JSON・補助情報):\n" .
+                wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n" .
+                "Site Profileの使い方:\n" .
+                "- site_identityはサイト概要、サービス、ターゲット、ブランド理解に使う\n" .
+                "- writing_profileは文体、構成、SEO、CTA傾向に使う\n" .
+                "- design_profileはレイアウト、ブロック、画像テイストに使う\n" .
+                "- content_profileはカテゴリ、タグ、内部リンク、関連記事傾向に使う\n";
+        }
+
+        return $instruction;
     }
 
     private function get_mode_label( $mode ) {

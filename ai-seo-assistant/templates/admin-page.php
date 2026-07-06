@@ -83,21 +83,18 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                             max="100"
                             class="small-text"
                         >
-                        <p class="description">初期値は20記事です。最新の公開記事から解析します。</p>
+                        <p class="description">投稿を解析する場合の件数です。固定ページは選択時に公開済みページを全件解析します。</p>
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">解析対象</th>
+                    <th scope="row"><label for="site_profile_source">解析対象</label></th>
                     <td>
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="site_profile_include_pages"
-                                value="1"
-                                <?php checked( $site_profile_include_pages ); ?>
-                            >
-                            固定ページも含める
-                        </label>
+                        <select id="site_profile_source" name="site_profile_source">
+                            <option value="posts" <?php selected( $site_profile_source, 'posts' ); ?>>投稿のみ</option>
+                            <option value="pages" <?php selected( $site_profile_source, 'pages' ); ?>>固定ページのみ</option>
+                            <option value="all" <?php selected( $site_profile_source, 'all' ); ?>>投稿 + 固定ページ</option>
+                        </select>
+                        <p class="description">固定ページのみ、または投稿と固定ページの両方を対象にできます。</p>
                     </td>
                 </tr>
             </table>
@@ -119,10 +116,21 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                 </tr>
                 <tr>
                     <th scope="row">保存キー</th>
-                    <td><code>ai_site_profile</code></td>
+                    <td><code>ai_site_profile</code> / <code>ai_site_knowledge</code></td>
                 </tr>
             </tbody>
         </table>
+
+        <h2>Site Knowledge</h2>
+        <?php if ( '' !== $site_knowledge ) : ?>
+            <textarea
+                class="large-text"
+                rows="12"
+                readonly
+            ><?php echo esc_textarea( $site_knowledge ); ?></textarea>
+        <?php else : ?>
+            <p>まだSite Knowledgeは作成されていません。</p>
+        <?php endif; ?>
 
         <h2>JSONプレビュー</h2>
         <?php if ( '' !== $site_profile_json ) : ?>
