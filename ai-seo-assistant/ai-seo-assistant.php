@@ -19,6 +19,7 @@ define( 'AISEO_ASSISTANT_URL', plugin_dir_url( __FILE__ ) );
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-prompt-builder.php';
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-gemini-client.php';
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-site-profile-analyzer.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-originality-booster.php';
 require_once AISEO_ASSISTANT_DIR . 'admin/class-aiseo-admin.php';
 
 function aiseo_assistant_init() {

@@ -85,6 +85,18 @@ class AISEO_Admin {
             $this->active_tab = 'generate';
             $this->save_draft();
         }
+
+        if ( 'run_booster' === $action ) {
+            $this->active_tab = 'generate';
+            $this->run_booster();
+            return;
+        }
+
+        if ( 'generate_image' === $action ) {
+            $this->active_tab = 'generate';
+            $this->generate_image();
+            return;
+        }
     }
 
     public function render_page() {
@@ -235,6 +247,56 @@ class AISEO_Admin {
         }
 
         $this->add_message( 'success', $message );
+    }
+
+    private function run_booster() {
+        $content = isset( $_POST['generated_content'] ) ? wp_kses_post( wp_unslash( $_POST['generated_content'] ) ) : '';
+
+        if ( '' === $content ) {
+            $this->add_message( 'error', 'ブーストを実行する本文がありません。' );
+            return;
+        }
+
+        $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
+        if ( ! is_array( $site_profile ) ) {
+            $site_profile = array();
+        }
+
+        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
+        $booster = new AISEO_Originality_Booster( $client );
+        $suggestions = $booster->suggest( $content, $site_profile );
+
+        if ( is_wp_error( $suggestions ) ) {
+            $this->add_message( 'error', 'オリジナル性ブースターの実行に失敗しました: ' . $suggestions->get_error_message() );
+            return;
+        }
+
+        // Append suggestions below the generated content for easy editing.
+        $this->generated_content = $content . "\n\n<!-- Originality Booster Suggestions -->\n" . $suggestions;
+        $this->generated_title = isset( $_POST['generated_title'] ) ? sanitize_text_field( wp_unslash( $_POST['generated_title'] ) ) : $this->generated_title;
+        $this->add_message( 'success', 'オリジナル性ブースターの提案を取得しました。内容を確認して下書き保存できます。' );
+    }
+
+    private function generate_image() {
+        $prompt = isset( $_POST['image_prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['image_prompt'] ) ) : '';
+        $size = isset( $_POST['image_size'] ) ? sanitize_text_field( wp_unslash( $_POST['image_size'] ) ) : '1024x1024';
+
+        if ( '' === $prompt ) {
+            $this->add_message( 'error', '画像生成用のプロンプトを入力してください。' );
+            return;
+        }
+
+        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
+        $result = $client->generate_image( $prompt, $size );
+
+        if ( is_wp_error( $result ) ) {
+            $this->add_message( 'error', '画像生成に失敗しました: ' . $result->get_error_message() );
+            return;
+        }
+
+        // $result expected to be a data URI
+        $img_html = '<div><strong>生成画像プレビュー</strong><br><img src="' . esc_url( $result ) . '" style="max-width:300px;height:auto;border:1px solid #ddd;padding:4px;margin-top:6px;"/></div>';
+        $this->add_message( 'success', $img_html );
     }
 
     private function get_article_types() {

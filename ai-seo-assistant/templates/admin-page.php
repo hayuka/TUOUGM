@@ -226,8 +226,42 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                         </td>
                     </tr>
                 </table>
+                    <p>
+                        <?php submit_button( '下書き保存' ); ?>
+                    </p>
+                </form>
 
-                <?php submit_button( '下書き保存' ); ?>
+                <form method="post" action="">
+                    <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
+                    <input type="hidden" name="aiseo_action" value="run_booster">
+                    <input type="hidden" name="generated_title" value="<?php echo esc_attr( $generated_title ); ?>">
+                    <input type="hidden" name="generated_content" value="<?php echo esc_attr( $generated_content ); ?>">
+                    <?php submit_button( 'オリジナル性ブースターを実行', 'secondary' ); ?>
+                </form>
+
+                <form method="post" action="">
+                    <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
+                    <input type="hidden" name="aiseo_action" value="generate_image">
+                    <table class="form-table" role="presentation">
+                        <tr>
+                            <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
+                            <td>
+                                <input type="text" id="image_prompt" name="image_prompt" class="regular-text" placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="image_size">サイズ</label></th>
+                            <td>
+                                <select id="image_size" name="image_size">
+                                    <option value="512x512">512x512</option>
+                                    <option value="1024x1024" selected>1024x1024</option>
+                                    <option value="2048x2048">2048x2048</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php submit_button( '画像を生成', 'secondary' ); ?>
+                </form>
             </form>
         <?php endif; ?>
     <?php endif; ?>

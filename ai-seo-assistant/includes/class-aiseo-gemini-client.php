@@ -153,6 +153,95 @@ class AISEO_Gemini_Client {
         return trim( implode( "\n", $texts ) );
     }
 
+    /**
+     * Generate booster suggestions using a custom prompt payload.
+     *
+     * @param string $prompt_text
+     * @param int $max_output_tokens
+     * @return string|WP_Error
+     */
+    public function generate_booster_suggestions( $prompt_text, $max_output_tokens = 800 ) {
+        if ( ! $this->has_api_key() ) {
+            return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
+        }
+
+        $response = $this->request( array( $this->get_system_prompt(), $prompt_text ), $max_output_tokens );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $content = $this->extract_text( $response );
+
+        if ( '' === $content ) {
+            return new WP_Error( 'aiseo_empty_response', 'Geminiから提案を取得できませんでした。' );
+        }
+
+        return $content;
+    }
+
+    /**
+     * Generate image via Gemini-like image endpoint.
+     * Note: this is a best-effort implementation and may need endpoint/config updates.
+     *
+     * @param string $prompt
+     * @param string $size
+     * @return string|WP_Error  Base64-encoded PNG data URI on success.
+     */
+    public function generate_image( $prompt, $size = '1024x1024' ) {
+        if ( ! $this->has_api_key() ) {
+            return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
+        }
+
+        // Use a conservative, documented image generation endpoint if available.
+        $image_api = 'https://generativelanguage.googleapis.com/v1beta/models/generative-image:generate';
+
+        $body = array(
+            'prompt' => array(
+                'text' => $prompt,
+            ),
+            'imageConfig' => array(
+                'size' => $size,
+            ),
+        );
+
+        $response = wp_remote_post(
+            $image_api,
+            array(
+                'timeout' => 120,
+                'headers' => array(
+                    'x-goog-api-key' => $this->api_key,
+                    'Content-Type' => 'application/json',
+                ),
+                'body' => wp_json_encode( $body ),
+            )
+        );
+
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( 200 > $status_code || 300 <= $status_code ) {
+            $message = isset( $body_json['error']['message'] ) ? $body_json['error']['message'] : '画像生成APIへの接続に失敗しました。';
+            return new WP_Error( 'aiseo_image_api_error', $message );
+        }
+
+        // Attempt to extract base64 bytes. Different endpoints may vary.
+        if ( isset( $body_json['artifacts'][0]['binary'] ) ) {
+            $b64 = $body_json['artifacts'][0]['binary'];
+            return 'data:image/png;base64,' . $b64;
+        }
+
+        if ( isset( $body_json['data'][0]['b64_json'] ) ) {
+            return 'data:image/png;base64,' . $body_json['data'][0]['b64_json'];
+        }
+
+        return new WP_Error( 'aiseo_image_no_data', '画像データがレスポンスに含まれていません。' );
+    }
+
     private function build_prompt_parts( $keywords, $article_type, $tone, array $site_profile = array(), $site_knowledge = '' ) {
         return array(
             $this->prompt_builder->get_system_prompt(),
