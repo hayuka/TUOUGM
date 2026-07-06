@@ -240,12 +240,17 @@ class AISEO_Gemini_Client {
         $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( 200 > $status_code || 300 <= $status_code ) {
-            $message = '画像生成APIへの接続に失敗しました。';
+            $message = sprintf( '画像生成APIへの接続に失敗しました。HTTP %d。', $status_code );
+
+            $body_text = wp_remote_retrieve_body( $response );
             if ( is_array( $body_json ) && isset( $body_json['error']['message'] ) ) {
-                $message = $body_json['error']['message'];
-            } elseif ( is_string( $body_text = wp_remote_retrieve_body( $response ) ) && '' !== trim( $body_text ) ) {
-                $message = $message . ' ' . wp_trim_words( strip_tags( $body_text ), 30, '...' );
+                $message .= ' ' . $body_json['error']['message'];
             }
+
+            if ( is_string( $body_text ) && '' !== trim( $body_text ) ) {
+                $message .= ' レスポンス: ' . wp_trim_words( strip_tags( $body_text ), 80, '...' );
+            }
+
             return new WP_Error( 'aiseo_image_api_error', $message );
         }
 
