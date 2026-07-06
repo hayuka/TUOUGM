@@ -11,6 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AISEO_Admin {
     const OPTION_API_KEY = 'aiseo_gemini_api_key';
+    const OPTION_SITE_PROFILE = 'ai_site_profile';
+    const OPTION_SITE_PROFILE_UPDATED = 'ai_site_profile_updated';
+    const OPTION_SITE_PROFILE_POSTS = 'ai_site_profile_posts';
+    const OPTION_SITE_PROFILE_LIMIT = 'aiseo_site_profile_limit';
+    const OPTION_SITE_PROFILE_INCLUDE_PAGES = 'aiseo_site_profile_include_pages';
     const NONCE_ACTION = 'aiseo_admin_action';
     const NONCE_NAME = 'aiseo_nonce';
 
@@ -68,6 +73,12 @@ class AISEO_Admin {
             return;
         }
 
+        if ( 'learn_site_profile' === $action ) {
+            $this->active_tab = 'profile';
+            $this->learn_site_profile();
+            return;
+        }
+
         if ( 'save_draft' === $action ) {
             $this->active_tab = 'generate';
             $this->save_draft();
@@ -83,6 +94,12 @@ class AISEO_Admin {
         $generated_title = $this->generated_title;
         $selected_tone = $this->selected_tone;
         $active_tab = $this->active_tab;
+        $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
+        $site_profile_updated = get_option( self::OPTION_SITE_PROFILE_UPDATED, '' );
+        $site_profile_posts = absint( get_option( self::OPTION_SITE_PROFILE_POSTS, 0 ) );
+        $site_profile_limit = absint( get_option( self::OPTION_SITE_PROFILE_LIMIT, 20 ) );
+        $site_profile_include_pages = (bool) get_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, false );
+        $site_profile_json = ! empty( $site_profile ) ? wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) : '';
 
         require AISEO_ASSISTANT_DIR . 'templates/admin-page.php';
     }
@@ -125,8 +142,13 @@ class AISEO_Admin {
             $article_type = 'blog';
         }
 
+        $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
+        if ( ! is_array( $site_profile ) ) {
+            $site_profile = array();
+        }
+
         $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
-        $content = $client->generate_article( $keywords, $article_type, $tone );
+        $content = $client->generate_article( $keywords, $article_type, $tone, $site_profile );
 
         if ( is_wp_error( $content ) ) {
             $this->add_message( 'error', '記事生成に失敗しました: ' . $content->get_error_message() );
@@ -137,6 +159,30 @@ class AISEO_Admin {
         $content = $this->normalize_generated_content( $content, $this->generated_title );
         $this->generated_content = $content;
         $this->add_message( 'success', '記事を生成しました。内容を確認して下書き保存できます。' );
+    }
+
+    private function learn_site_profile() {
+        $limit = isset( $_POST['site_profile_limit'] ) ? absint( wp_unslash( $_POST['site_profile_limit'] ) ) : 20;
+        $include_pages = ! empty( $_POST['site_profile_include_pages'] );
+
+        $limit = max( 1, min( 100, $limit ) );
+
+        update_option( self::OPTION_SITE_PROFILE_LIMIT, $limit, false );
+        update_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, $include_pages ? 1 : 0, false );
+
+        $analyzer = new AISEO_Site_Profile_Analyzer();
+        $profile = $analyzer->analyze( $limit, $include_pages );
+
+        if ( is_wp_error( $profile ) ) {
+            $this->add_message( 'error', 'サイトプロファイルの学習に失敗しました: ' . $profile->get_error_message() );
+            return;
+        }
+
+        update_option( self::OPTION_SITE_PROFILE, $profile, false );
+        update_option( self::OPTION_SITE_PROFILE_UPDATED, current_time( 'mysql' ), false );
+        update_option( self::OPTION_SITE_PROFILE_POSTS, isset( $profile['analyzed_posts'] ) ? absint( $profile['analyzed_posts'] ) : 0, false );
+
+        $this->add_message( 'success', 'サイトプロファイルを更新しました。以降の記事生成で既存記事の傾向を参照します。' );
     }
 
     private function save_draft() {

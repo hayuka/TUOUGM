@@ -11,9 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $settings_url = admin_url( 'admin.php?page=aiseo-assistant&tab=settings' );
 $generate_url = admin_url( 'admin.php?page=aiseo-assistant&tab=generate' );
+$profile_url = admin_url( 'admin.php?page=aiseo-assistant&tab=profile' );
 $current_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $active_tab;
 
-if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
+if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true ) ) {
     $current_tab = 'generate';
 }
 ?>
@@ -28,6 +29,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
 
     <h2 class="nav-tab-wrapper">
         <a class="nav-tab <?php echo 'generate' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $generate_url ); ?>">記事生成</a>
+        <a class="nav-tab <?php echo 'profile' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $profile_url ); ?>">サイトプロファイル</a>
         <a class="nav-tab <?php echo 'settings' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $settings_url ); ?>">設定</a>
     </h2>
 
@@ -60,7 +62,85 @@ if ( ! in_array( $current_tab, array( 'generate', 'settings' ), true ) ) {
             <input type="hidden" name="aiseo_action" value="test_connection">
             <?php submit_button( 'Gemini接続テスト', 'secondary' ); ?>
         </form>
+    <?php elseif ( 'profile' === $current_tab ) : ?>
+        <h2>サイトプロファイル</h2>
+        <p>公開済み記事を解析し、文体・構成・レイアウト・画像利用傾向をJSONとして保存します。</p>
+
+        <form method="post" action="">
+            <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
+            <input type="hidden" name="aiseo_action" value="learn_site_profile">
+
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><label for="site_profile_limit">学習記事数</label></th>
+                    <td>
+                        <input
+                            type="number"
+                            id="site_profile_limit"
+                            name="site_profile_limit"
+                            value="<?php echo esc_attr( $site_profile_limit ); ?>"
+                            min="1"
+                            max="100"
+                            class="small-text"
+                        >
+                        <p class="description">初期値は20記事です。最新の公開記事から解析します。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">解析対象</th>
+                    <td>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="site_profile_include_pages"
+                                value="1"
+                                <?php checked( $site_profile_include_pages ); ?>
+                            >
+                            固定ページも含める
+                        </label>
+                    </td>
+                </tr>
+            </table>
+
+            <?php submit_button( empty( $site_profile ) ? 'サイトを学習' : 'サイトプロファイル更新' ); ?>
+        </form>
+
+        <hr>
+        <h2>学習状況</h2>
+        <table class="widefat striped" style="max-width: 720px;">
+            <tbody>
+                <tr>
+                    <th scope="row">最終更新日時</th>
+                    <td><?php echo '' !== $site_profile_updated ? esc_html( $site_profile_updated ) : '未学習'; ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">学習記事数</th>
+                    <td><?php echo esc_html( (string) $site_profile_posts ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">保存キー</th>
+                    <td><code>ai_site_profile</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>JSONプレビュー</h2>
+        <?php if ( '' !== $site_profile_json ) : ?>
+            <textarea
+                class="large-text code"
+                rows="22"
+                readonly
+            ><?php echo esc_textarea( $site_profile_json ); ?></textarea>
+        <?php else : ?>
+            <p>まだサイトプロファイルは作成されていません。</p>
+        <?php endif; ?>
     <?php else : ?>
+        <?php if ( ! empty( $site_profile ) ) : ?>
+            <div class="notice notice-info inline">
+                <p>サイトプロファイル学習済みです。記事生成時に既存記事の文体・構成・レイアウト傾向を参照します。</p>
+            </div>
+        <?php endif; ?>
+
         <form method="post" action="">
             <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
             <input type="hidden" name="aiseo_action" value="generate_article">

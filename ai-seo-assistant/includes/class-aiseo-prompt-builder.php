@@ -41,14 +41,19 @@ class AISEO_Prompt_Builder {
         return isset( $tones[ $tone ] ) ? $tones[ $tone ] : $tones['standard'];
     }
 
-    public function build_user_prompt( $keywords, $article_type, $tone ) {
+    public function build_user_prompt( $keywords, $article_type, $tone, array $site_profile = array() ) {
+        $profile_instruction = $this->build_site_profile_instruction( $site_profile );
+
         return sprintf(
             "キーワード: %s\n" .
             "記事タイプ: %s\n" .
             "%s\n" .
+            "%s" .
             "条件:\n" .
             "- タイトルを1つ提示する\n" .
             "- 導入、見出し、本文、まとめを含める\n" .
+            "- サイトプロファイルがある場合は、出力トーンよりもサイトプロファイルを優先する\n" .
+            "- 既存記事の平均見出し数、段落量、文体、CTAやFAQの傾向に近づける\n" .
             "- 最終出力に \"タイトル:\" / \"本文:\" のラベルを含めない\n" .
             "- HTMLではなく、Markdown見出し記法で出力する\n" .
             "出力形式:\n" .
@@ -56,8 +61,22 @@ class AISEO_Prompt_Builder {
             "本文:\n",
             $keywords,
             $this->get_mode_label( $article_type ),
-            $this->get_tone_instruction( $tone )
+            $this->get_tone_instruction( $tone ),
+            $profile_instruction
         );
+    }
+
+    private function build_site_profile_instruction( array $site_profile ) {
+        if ( empty( $site_profile ) ) {
+            return '';
+        }
+
+        return "サイトプロファイル(JSON):\n" .
+            wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) . "\n" .
+            "サイトプロファイルの使い方:\n" .
+            "- tone/style/readabilityに合わせて文体を調整する\n" .
+            "- average_words/average_h2/average_h3/paragraph_lengthを記事構成の目安にする\n" .
+            "- list_ratio/table_ratio/faq/cta_position/layout/imagesの傾向を必要に応じて反映する\n";
     }
 
     private function get_mode_label( $mode ) {
