@@ -44,7 +44,7 @@ class AISEO_Site_Profile_Analyzer {
 
         $this->last_analyzed_count = count( $posts );
 
-        return $this->build_profile( $items, $this->get_identity_pages() );
+        return $this->build_profile( $items, $this->get_identity_pages(), $limit );
     }
 
     public function get_last_analyzed_count() {
@@ -234,7 +234,7 @@ class AISEO_Site_Profile_Analyzer {
         );
     }
 
-    private function build_profile( array $items, array $identity_pages ) {
+    private function build_profile( array $items, array $identity_pages, $featured_image_sample_limit = 20 ) {
         $profile = array(
             'site_identity' => array(
                 'site_name' => get_bloginfo( 'name' ),
@@ -355,6 +355,9 @@ class AISEO_Site_Profile_Analyzer {
                     'illustration_ratio' => 0,
                     'size_tendency' => $this->dominant_image_size( $items ),
                 ),
+            ),
+            'media_profile' => array(
+                'featured_image' => ( new AISEO_Media_Analyzer() )->analyze_featured_image_sizes( $featured_image_sample_limit ),
             ),
             'content_profile' => array(
                 'categories' => $this->get_top_terms( 'category', 10 ),

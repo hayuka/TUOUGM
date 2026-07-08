@@ -12,9 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 $settings_url = admin_url( 'admin.php?page=aiseo-assistant&tab=settings' );
 $generate_url = admin_url( 'admin.php?page=aiseo-assistant&tab=generate' );
 $profile_url = admin_url( 'admin.php?page=aiseo-assistant&tab=profile' );
+$media_url = admin_url( 'admin.php?page=aiseo-assistant&tab=media' );
 $current_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : $active_tab;
 
-if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true ) ) {
+if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings' ), true ) ) {
     $current_tab = 'generate';
 }
 ?>
@@ -30,6 +31,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
     <h2 class="nav-tab-wrapper">
         <a class="nav-tab <?php echo 'generate' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $generate_url ); ?>">記事生成</a>
         <a class="nav-tab <?php echo 'profile' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $profile_url ); ?>">サイトプロファイル</a>
+        <a class="nav-tab <?php echo 'media' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $media_url ); ?>">画像設定</a>
         <a class="nav-tab <?php echo 'settings' === $current_tab ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( $settings_url ); ?>">設定</a>
     </h2>
 
@@ -142,6 +144,65 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
         <?php else : ?>
             <p>まだサイトプロファイルは作成されていません。</p>
         <?php endif; ?>
+    <?php elseif ( 'media' === $current_tab ) : ?>
+        <h2>アイキャッチ画像サイズ</h2>
+        <p>既存記事のアイキャッチ画像サイズを解析し、新規生成時の推奨サイズを自動決定します。</p>
+        <table class="widefat striped" style="max-width: 720px;">
+            <tbody>
+                <tr>
+                    <th scope="row">推奨サイズ</th>
+                    <td><?php echo esc_html( $recommended_featured_size['recommended_width'] . ' x ' . $recommended_featured_size['recommended_height'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">アスペクト比</th>
+                    <td><?php echo esc_html( $recommended_featured_size['aspect_ratio'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">集計元記事数</th>
+                    <td><?php echo esc_html( (string) $recommended_featured_size['source_count'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">決定方法</th>
+                    <td>
+                        <?php
+                        $decision_labels = array(
+                            'mode' => '最頻出サイズ',
+                            'median' => '中央値に近いサイズ',
+                            'default' => 'デフォルト値(画像情報が不足)',
+                        );
+                        echo esc_html( $decision_labels[ $recommended_featured_size['decision_method'] ] ?? $recommended_featured_size['decision_method'] );
+                        ?>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>画像生成API Provider状態</h2>
+        <table class="widefat striped" style="max-width: 720px;">
+            <tbody>
+                <tr>
+                    <th scope="row">Provider</th>
+                    <td><?php echo esc_html( $image_provider_status['provider'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">モデル</th>
+                    <td><?php echo esc_html( $image_provider_status['model'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">APIバージョン</th>
+                    <td><?php echo esc_html( $image_provider_status['api_version'] ); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">エンドポイント</th>
+                    <td><code><?php echo esc_html( $image_provider_status['endpoint_base'] ); ?></code></td>
+                </tr>
+                <tr>
+                    <th scope="row">APIキー</th>
+                    <td><?php echo $image_provider_status['has_api_key'] ? '設定済み' : '未設定（設定タブから登録してください）'; ?></td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="description">Provider/モデル/エンドポイントはコード側のデフォルト設定です。APIバージョン変更時はProviderクラスのみを修正すれば記事生成側には影響しません。</p>
     <?php else : ?>
         <?php if ( ! empty( $site_profile ) ) : ?>
             <div class="notice notice-info inline">
@@ -198,7 +259,8 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
             <form method="post" action="">
                 <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
                 <input type="hidden" name="generated_title" value="<?php echo esc_attr( $generated_title ); ?>">
-                <input type="hidden" id="image_action_hidden" name="image_action" value="preview">
+                <input type="hidden" id="image_purpose_hidden" name="image_purpose" value="featured">
+                <input type="hidden" id="featured_image_attachment_id" name="featured_image_attachment_id" value="<?php echo esc_attr( (string) $featured_image_attachment_id ); ?>">
 
                 <table class="form-table" role="presentation">
                     <tr>
@@ -224,11 +286,18 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                                 class="large-text code"
                                 required
                             ><?php echo esc_textarea( $generated_content ); ?></textarea>
+                            <p class="description">本文内画像は <code>[aiseo_image id="..." size="..." alt="..."]</code> ショートコードで挿入されます。挿入位置は自由に編集できます。</p>
                         </td>
                     </tr>
                 </table>
 
                 <h3>画像生成</h3>
+                <?php if ( $featured_image_attachment_id > 0 ) : ?>
+                    <p>
+                        <strong>設定中のアイキャッチ画像:</strong><br>
+                        <?php echo wp_kses_post( wp_get_attachment_image( $featured_image_attachment_id, 'medium' ) ); ?>
+                    </p>
+                <?php endif; ?>
                 <table class="form-table" role="presentation">
                     <tr>
                         <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
@@ -241,18 +310,11 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                                 placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真"
                                 value="<?php echo esc_attr( $generated_image_prompt ); ?>"
                             >
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="image_size">サイズ</label></th>
-                        <td>
-                            <select id="image_size" name="image_size">
-                                <option value="512x512">512x512</option>
-                                <option value="1024x768">1024x768</option>
-                                <option value="1024x1024" selected>1024x1024</option>
-                                <option value="2048x1536">2048x1536</option>
-                                <option value="2048x2048">2048x2048</option>
-                            </select>
+                            <p class="description">
+                                アイキャッチ画像は推奨サイズ
+                                <?php echo esc_html( $recommended_featured_size['recommended_width'] . 'x' . $recommended_featured_size['recommended_height'] ); ?>
+                                （<a href="<?php echo esc_url( $media_url ); ?>">画像設定タブ</a>で確認）を参考に生成されます。
+                            </p>
                         </td>
                     </tr>
                 </table>
@@ -260,8 +322,8 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'settings' ), true 
                 <p>
                     <button type="submit" name="aiseo_action" value="save_draft" class="button button-primary">下書き保存</button>
                     <button type="submit" name="aiseo_action" value="run_booster" class="button button-secondary">オリジナル性ブースターを実行</button>
-                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary">画像プレビュー</button>
-                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_action_hidden').value='embed';">本文に画像を埋め込む</button>
+                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='featured';">アイキャッチ画像を生成</button>
+                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='inline';">本文内画像を生成</button>
                 </p>
             </form>
         <?php endif; ?>

@@ -20,9 +20,17 @@ require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-prompt-builder.php';
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-gemini-client.php';
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-site-profile-analyzer.php';
 require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-originality-booster.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-image-provider-interface.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-gemini-image-provider.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-image-service.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-media-analyzer.php';
+require_once AISEO_ASSISTANT_DIR . 'includes/class-aiseo-image-shortcode.php';
 require_once AISEO_ASSISTANT_DIR . 'admin/class-aiseo-admin.php';
 
 function aiseo_assistant_init() {
+    $shortcode = new AISEO_Image_Shortcode();
+    $shortcode->register();
+
     if ( is_admin() ) {
         new AISEO_Admin();
     }

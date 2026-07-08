@@ -18,6 +18,10 @@ class AISEO_Admin {
     const OPTION_SITE_PROFILE_LIMIT = 'aiseo_site_profile_limit';
     const OPTION_SITE_PROFILE_INCLUDE_PAGES = 'aiseo_site_profile_include_pages';
     const OPTION_SITE_PROFILE_SOURCE = 'aiseo_site_profile_source';
+    const OPTION_IMAGE_PROVIDER = 'aiseo_image_provider';
+    const OPTION_IMAGE_MODEL = 'aiseo_image_model';
+    const OPTION_IMAGE_API_VERSION = 'aiseo_image_api_version';
+    const OPTION_IMAGE_ENDPOINT_BASE = 'aiseo_image_endpoint_base';
     const NONCE_ACTION = 'aiseo_admin_action';
     const NONCE_NAME = 'aiseo_nonce';
 
@@ -25,6 +29,7 @@ class AISEO_Admin {
     private $generated_content = '';
     private $generated_title = '';
     private $generated_image_prompt = '';
+    private $featured_image_attachment_id = 0;
     private $selected_tone = 'standard';
     private $active_tab = 'generate';
 
@@ -100,6 +105,12 @@ class AISEO_Admin {
         }
     }
 
+    private function get_image_service() {
+        $api_key = get_option( self::OPTION_API_KEY, '' );
+        $provider = new AISEO_Gemini_Image_Provider( $api_key );
+        return new AISEO_Image_Service( $provider );
+    }
+
     public function render_page() {
         $api_key = get_option( self::OPTION_API_KEY, '' );
         $article_types = $this->get_article_types();
@@ -108,6 +119,7 @@ class AISEO_Admin {
         $generated_content = $this->generated_content;
         $generated_title = $this->generated_title;
         $generated_image_prompt = $this->generated_image_prompt;
+        $featured_image_attachment_id = $this->featured_image_attachment_id;
         $selected_tone = $this->selected_tone;
         $active_tab = $this->active_tab;
         $site_profile = get_option( self::OPTION_SITE_PROFILE, array() );
@@ -120,6 +132,19 @@ class AISEO_Admin {
             $site_profile_source = (bool) get_option( self::OPTION_SITE_PROFILE_INCLUDE_PAGES, false ) ? 'all' : 'posts';
         }
         $site_profile_json = ! empty( $site_profile ) ? wp_json_encode( $site_profile, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT ) : '';
+
+        $media_analyzer = new AISEO_Media_Analyzer();
+        $recommended_featured_size = ! empty( $site_profile['media_profile']['featured_image'] )
+            ? $site_profile['media_profile']['featured_image']
+            : $media_analyzer->analyze_featured_image_sizes( 50 );
+
+        $image_provider_status = array(
+            'provider' => get_option( self::OPTION_IMAGE_PROVIDER, 'gemini' ),
+            'model' => get_option( self::OPTION_IMAGE_MODEL, AISEO_Gemini_Image_Provider::DEFAULT_MODEL ),
+            'api_version' => get_option( self::OPTION_IMAGE_API_VERSION, AISEO_Gemini_Image_Provider::DEFAULT_API_VERSION ),
+            'endpoint_base' => get_option( self::OPTION_IMAGE_ENDPOINT_BASE, AISEO_Gemini_Image_Provider::DEFAULT_ENDPOINT_BASE ),
+            'has_api_key' => '' !== trim( (string) $api_key ),
+        );
 
         require AISEO_ASSISTANT_DIR . 'templates/admin-page.php';
     }
@@ -225,6 +250,7 @@ class AISEO_Admin {
     private function save_draft() {
         $title = isset( $_POST['generated_title'] ) ? sanitize_text_field( wp_unslash( $_POST['generated_title'] ) ) : '';
         $content = isset( $_POST['generated_content'] ) ? wp_kses_post( wp_unslash( $_POST['generated_content'] ) ) : '';
+        $featured_image_attachment_id = isset( $_POST['featured_image_attachment_id'] ) ? absint( wp_unslash( $_POST['featured_image_attachment_id'] ) ) : 0;
 
         if ( '' === $title || '' === $content ) {
             $this->add_message( 'error', '下書き保存するタイトルと本文がありません。' );
@@ -247,7 +273,21 @@ class AISEO_Admin {
             $this->add_message( 'error', '下書き保存に失敗しました: ' . $post_id->get_error_message() );
             $this->generated_title = $title;
             $this->generated_content = $content;
+            $this->featured_image_attachment_id = $featured_image_attachment_id;
             return;
+        }
+
+        $image_service = $this->get_image_service();
+
+        if ( $featured_image_attachment_id > 0 ) {
+            $image_service->set_featured_image( $post_id, $featured_image_attachment_id );
+            $image_service->link_to_post( $featured_image_attachment_id, $post_id );
+        }
+
+        if ( preg_match_all( '/\[aiseo_image[^\]]*\bid=["\']?(\d+)["\']?[^\]]*\]/', $content, $inline_matches ) ) {
+            foreach ( array_unique( $inline_matches[1] ) as $inline_attachment_id ) {
+                $image_service->link_to_post( (int) $inline_attachment_id, $post_id );
+            }
         }
 
         $edit_link = get_edit_post_link( $post_id, '' );
@@ -290,33 +330,56 @@ class AISEO_Admin {
 
     private function generate_image() {
         $prompt = isset( $_POST['image_prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['image_prompt'] ) ) : '';
-        $size = isset( $_POST['image_size'] ) ? sanitize_text_field( wp_unslash( $_POST['image_size'] ) ) : '1024x1024';
-        $image_action = isset( $_POST['image_action'] ) ? sanitize_key( wp_unslash( $_POST['image_action'] ) ) : 'preview';
+        $purpose = isset( $_POST['image_purpose'] ) ? sanitize_key( wp_unslash( $_POST['image_purpose'] ) ) : 'featured';
+        if ( ! in_array( $purpose, array( 'featured', 'inline' ), true ) ) {
+            $purpose = 'featured';
+        }
+
         $this->generated_title = isset( $_POST['generated_title'] ) ? sanitize_text_field( wp_unslash( $_POST['generated_title'] ) ) : $this->generated_title;
         $this->generated_content = isset( $_POST['generated_content'] ) ? wp_kses_post( wp_unslash( $_POST['generated_content'] ) ) : $this->generated_content;
-        $this->generated_image_prompt = isset( $_POST['image_prompt'] ) ? sanitize_text_field( wp_unslash( $_POST['image_prompt'] ) ) : $this->generated_image_prompt;
+        $this->generated_image_prompt = '' !== $prompt ? $prompt : $this->generated_image_prompt;
+        $this->featured_image_attachment_id = isset( $_POST['featured_image_attachment_id'] ) ? absint( wp_unslash( $_POST['featured_image_attachment_id'] ) ) : 0;
 
         if ( '' === $prompt ) {
             $this->add_message( 'error', '画像生成用のプロンプトを入力してください。' );
             return;
         }
 
-        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
-        $result = $client->generate_image( $prompt, $size );
+        if ( 'featured' === $purpose ) {
+            $media_analyzer = new AISEO_Media_Analyzer();
+            $recommended = $media_analyzer->analyze_featured_image_sizes( 50 );
+            $width = $recommended['recommended_width'];
+            $height = $recommended['recommended_height'];
+        } else {
+            $width = 1024;
+            $height = 1024;
+        }
+
+        $alt = wp_trim_words( wp_strip_all_tags( $this->generated_title ), 12, '' );
+        if ( '' === $alt ) {
+            $alt = wp_trim_words( $prompt, 12, '' );
+        }
+
+        $image_service = $this->get_image_service();
+        $result = $image_service->generate_and_save( $prompt, $width, $height, $purpose, $alt, 0 );
 
         if ( is_wp_error( $result ) ) {
             $this->add_message( 'error', '画像生成に失敗しました: ' . $result->get_error_message() );
             return;
         }
 
-        $img_html = '<div><strong>生成画像プレビュー</strong><br><img src="' . esc_url( $result ) . '" style="max-width:300px;height:auto;border:1px solid #ddd;padding:4px;margin-top:6px;"/></div>';
+        $attachment_id = $result['attachment_id'];
+        $preview = wp_get_attachment_image( $attachment_id, 'medium' );
 
-        if ( 'embed' === $image_action ) {
-            $this->generated_content = $this->generated_content . "\n\n<img src='" . esc_url( $result ) . "' alt='生成画像'>\n";
-            $this->add_message( 'success', '画像を記事本文に埋め込みました。下書き保存前に内容を確認してください。' );
-        } else {
-            $this->add_message( 'success', $img_html );
+        if ( 'featured' === $purpose ) {
+            $this->featured_image_attachment_id = $attachment_id;
+            $this->add_message( 'success', 'アイキャッチ画像を生成しました。下書き保存時に投稿へ設定されます。<br>' . $preview );
+            return;
         }
+
+        $shortcode = $image_service->build_shortcode( $attachment_id, 'large', $alt );
+        $this->generated_content = rtrim( $this->generated_content ) . "\n\n" . $shortcode . "\n";
+        $this->add_message( 'success', '本文内画像を生成し、ショートコードを挿入しました。下書き保存前に挿入位置を確認してください。<br>' . $preview );
     }
 
     private function get_article_types() {
