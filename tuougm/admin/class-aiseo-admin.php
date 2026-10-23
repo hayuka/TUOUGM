@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin screen for AI SEO Assistant.
+ * Admin screen for TUOUGM.
  *
  * @package AISEOAssistant
  */
@@ -19,9 +19,11 @@ class AISEO_Admin {
     const OPTION_SITE_PROFILE_INCLUDE_PAGES = 'aiseo_site_profile_include_pages';
     const OPTION_SITE_PROFILE_SOURCE = 'aiseo_site_profile_source';
     const OPTION_IMAGE_PROVIDER = 'aiseo_image_provider';
-    const OPTION_IMAGE_MODEL = 'aiseo_image_model';
-    const OPTION_IMAGE_API_VERSION = 'aiseo_image_api_version';
-    const OPTION_IMAGE_ENDPOINT_BASE = 'aiseo_image_endpoint_base';
+    const OPTION_IMAGE_GENERATION_ENABLED = 'aiseo_image_generation_enabled';
+    const OPTION_TEXT_PROVIDER = 'aiseo_text_provider';
+    const OPTION_OPENAI_API_KEY = 'aiseo_openai_api_key';
+    const OPTION_CLAUDE_API_KEY = 'aiseo_claude_api_key';
+    const OPTION_STABILITY_API_KEY = 'aiseo_stability_api_key';
     const NONCE_ACTION = 'aiseo_admin_action';
     const NONCE_NAME = 'aiseo_nonce';
 
@@ -40,8 +42,8 @@ class AISEO_Admin {
 
     public function register_menu() {
         add_menu_page(
-            'AI SEO Assistant',
-            'AI SEO Assistant',
+            'TUOUGM',
+            'TUOUGM',
             'manage_options',
             'aiseo-assistant',
             array( $this, 'render_page' ),
@@ -105,10 +107,45 @@ class AISEO_Admin {
         }
     }
 
+    private function get_text_client() {
+        $provider = get_option( self::OPTION_TEXT_PROVIDER, AISEO_AI_Client_Factory::PROVIDER_GEMINI );
+        $api_key = $this->get_api_key_for_text_provider( $provider );
+        return AISEO_AI_Client_Factory::create( $provider, $api_key );
+    }
+
+    private function get_api_key_for_text_provider( $provider ) {
+        switch ( $provider ) {
+            case AISEO_AI_Client_Factory::PROVIDER_OPENAI:
+                return get_option( self::OPTION_OPENAI_API_KEY, '' );
+            case AISEO_AI_Client_Factory::PROVIDER_CLAUDE:
+                return get_option( self::OPTION_CLAUDE_API_KEY, '' );
+            case AISEO_AI_Client_Factory::PROVIDER_GEMINI:
+            default:
+                return get_option( self::OPTION_API_KEY, '' );
+        }
+    }
+
     private function get_image_service() {
-        $api_key = get_option( self::OPTION_API_KEY, '' );
-        $provider = new AISEO_Gemini_Image_Provider( $api_key );
+        $provider_key = get_option( self::OPTION_IMAGE_PROVIDER, AISEO_Image_Provider_Factory::PROVIDER_GEMINI );
+        $api_key = $this->get_api_key_for_image_provider( $provider_key );
+        $provider = AISEO_Image_Provider_Factory::create( $provider_key, $api_key );
         return new AISEO_Image_Service( $provider );
+    }
+
+    private function get_api_key_for_image_provider( $provider ) {
+        switch ( $provider ) {
+            case AISEO_Image_Provider_Factory::PROVIDER_OPENAI:
+                return get_option( self::OPTION_OPENAI_API_KEY, '' );
+            case AISEO_Image_Provider_Factory::PROVIDER_STABILITY:
+                return get_option( self::OPTION_STABILITY_API_KEY, '' );
+            case AISEO_Image_Provider_Factory::PROVIDER_GEMINI:
+            default:
+                return get_option( self::OPTION_API_KEY, '' );
+        }
+    }
+
+    private function is_image_generation_enabled() {
+        return (bool) get_option( self::OPTION_IMAGE_GENERATION_ENABLED, false );
     }
 
     public function render_page() {
@@ -138,12 +175,44 @@ class AISEO_Admin {
             ? $site_profile['media_profile']['featured_image']
             : $media_analyzer->analyze_featured_image_sizes( 50 );
 
+        $openai_api_key = get_option( self::OPTION_OPENAI_API_KEY, '' );
+        $claude_api_key = get_option( self::OPTION_CLAUDE_API_KEY, '' );
+        $stability_api_key = get_option( self::OPTION_STABILITY_API_KEY, '' );
+
+        $text_providers = AISEO_AI_Client_Factory::get_supported_providers();
+        $text_provider = get_option( self::OPTION_TEXT_PROVIDER, AISEO_AI_Client_Factory::PROVIDER_GEMINI );
+        if ( ! array_key_exists( $text_provider, $text_providers ) ) {
+            $text_provider = AISEO_AI_Client_Factory::PROVIDER_GEMINI;
+        }
+        $text_provider_status = array(
+            'provider' => $text_provider,
+            'has_api_key' => '' !== trim( (string) $this->get_api_key_for_text_provider( $text_provider ) ),
+        );
+
+        $text_client = $this->get_text_client();
+        $text_provider_info = array();
+        $text_provider_connection = array(
+            'status' => 'error',
+            'message' => '状態を取得できませんでした。',
+            'http_code' => 0,
+            'retry_count' => 0,
+        );
+
+        if ( 'generate' === $active_tab ) {
+            $text_provider_info = $text_client->getProviderInfo();
+            $text_provider_connection = $text_client->connection_test();
+        }
+
+        $image_providers = AISEO_Image_Provider_Factory::get_supported_providers();
+        $image_provider = get_option( self::OPTION_IMAGE_PROVIDER, AISEO_Image_Provider_Factory::PROVIDER_GEMINI );
+        if ( ! array_key_exists( $image_provider, $image_providers ) ) {
+            $image_provider = AISEO_Image_Provider_Factory::PROVIDER_GEMINI;
+        }
+        $image_generation_enabled = $this->is_image_generation_enabled();
         $image_provider_status = array(
-            'provider' => get_option( self::OPTION_IMAGE_PROVIDER, 'gemini' ),
-            'model' => get_option( self::OPTION_IMAGE_MODEL, AISEO_Gemini_Image_Provider::DEFAULT_MODEL ),
-            'api_version' => get_option( self::OPTION_IMAGE_API_VERSION, AISEO_Gemini_Image_Provider::DEFAULT_API_VERSION ),
-            'endpoint_base' => get_option( self::OPTION_IMAGE_ENDPOINT_BASE, AISEO_Gemini_Image_Provider::DEFAULT_ENDPOINT_BASE ),
-            'has_api_key' => '' !== trim( (string) $api_key ),
+            'provider' => $image_provider,
+            'has_api_key' => '' !== trim( (string) $this->get_api_key_for_image_provider( $image_provider ) ),
+            'enabled' => $image_generation_enabled,
         );
 
         require AISEO_ASSISTANT_DIR . 'templates/admin-page.php';
@@ -152,20 +221,54 @@ class AISEO_Admin {
     private function save_settings() {
         $api_key = isset( $_POST['gemini_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['gemini_api_key'] ) ) : '';
         update_option( self::OPTION_API_KEY, $api_key, false );
-        $this->add_message( 'success', 'APIキーを保存しました。' );
+
+        $openai_api_key = isset( $_POST['openai_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['openai_api_key'] ) ) : '';
+        update_option( self::OPTION_OPENAI_API_KEY, $openai_api_key, false );
+
+        $claude_api_key = isset( $_POST['claude_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['claude_api_key'] ) ) : '';
+        update_option( self::OPTION_CLAUDE_API_KEY, $claude_api_key, false );
+
+        $stability_api_key = isset( $_POST['stability_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stability_api_key'] ) ) : '';
+        update_option( self::OPTION_STABILITY_API_KEY, $stability_api_key, false );
+
+        $text_provider = isset( $_POST['text_provider'] ) ? sanitize_key( wp_unslash( $_POST['text_provider'] ) ) : AISEO_AI_Client_Factory::PROVIDER_GEMINI;
+        if ( ! array_key_exists( $text_provider, AISEO_AI_Client_Factory::get_supported_providers() ) ) {
+            $text_provider = AISEO_AI_Client_Factory::PROVIDER_GEMINI;
+        }
+        update_option( self::OPTION_TEXT_PROVIDER, $text_provider, false );
+
+        $image_provider = isset( $_POST['image_provider'] ) ? sanitize_key( wp_unslash( $_POST['image_provider'] ) ) : AISEO_Image_Provider_Factory::PROVIDER_GEMINI;
+        if ( ! array_key_exists( $image_provider, AISEO_Image_Provider_Factory::get_supported_providers() ) ) {
+            $image_provider = AISEO_Image_Provider_Factory::PROVIDER_GEMINI;
+        }
+        update_option( self::OPTION_IMAGE_PROVIDER, $image_provider, false );
+
+        $image_generation_enabled = ! empty( $_POST['image_generation_enabled'] );
+        update_option( self::OPTION_IMAGE_GENERATION_ENABLED, $image_generation_enabled, false );
+
+        $this->add_message( 'success', '設定を保存しました。' );
     }
 
     private function test_connection() {
-        $api_key = get_option( self::OPTION_API_KEY, '' );
-        $client = new AISEO_Gemini_Client( $api_key );
-        $result = $client->test_connection();
+        $client = $this->get_text_client();
+        $result = $client->connection_test();
 
-        if ( is_wp_error( $result ) ) {
-            $this->add_message( 'error', '接続テストに失敗しました: ' . $result->get_error_message() );
+        if ( ! is_array( $result ) || ! isset( $result['status'], $result['message'] ) ) {
+            $this->add_message( 'error', '接続テストに失敗しました。' );
             return;
         }
 
-        $this->add_message( 'success', 'Gemini APIへの接続に成功しました。' );
+        if ( 'success' === $result['status'] ) {
+            $this->add_message( 'success', 'AI APIへの接続に成功しました。' );
+            return;
+        }
+
+        if ( 'warning' === $result['status'] ) {
+            $this->add_message( 'warning', '接続テストに警告があります: ' . $result['message'] );
+            return;
+        }
+
+        $this->add_message( 'error', '接続テストに失敗しました: ' . $result['message'] );
     }
 
     private function generate_article() {
@@ -193,7 +296,7 @@ class AISEO_Admin {
         }
         $site_knowledge = get_option( self::OPTION_SITE_KNOWLEDGE, '' );
 
-        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
+        $client = $this->get_text_client();
         $content = $client->generate_article( $keywords, $article_type, $tone, $site_profile, $site_knowledge );
 
         if ( is_wp_error( $content ) ) {
@@ -313,7 +416,7 @@ class AISEO_Admin {
             $site_profile = array();
         }
 
-        $client = new AISEO_Gemini_Client( get_option( self::OPTION_API_KEY, '' ) );
+        $client = $this->get_text_client();
         $booster = new AISEO_Originality_Booster( $client );
         $suggestions = $booster->suggest( $content, $site_profile );
 
@@ -339,6 +442,11 @@ class AISEO_Admin {
         $this->generated_content = isset( $_POST['generated_content'] ) ? wp_kses_post( wp_unslash( $_POST['generated_content'] ) ) : $this->generated_content;
         $this->generated_image_prompt = '' !== $prompt ? $prompt : $this->generated_image_prompt;
         $this->featured_image_attachment_id = isset( $_POST['featured_image_attachment_id'] ) ? absint( wp_unslash( $_POST['featured_image_attachment_id'] ) ) : 0;
+
+        if ( ! $this->is_image_generation_enabled() ) {
+            $this->add_message( 'error', '画像生成機能が無効になっています。「設定」タブで画像生成を有効にしてください（選択した画像生成APIによっては課金アカウントが必要です）。' );
+            return;
+        }
 
         if ( '' === $prompt ) {
             $this->add_message( 'error', '画像生成用のプロンプトを入力してください。' );

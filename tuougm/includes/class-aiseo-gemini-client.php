@@ -1,6 +1,6 @@
 <?php
 /**
- * Gemini API client for AI SEO Assistant.
+ * Gemini API client for TUOUGM.
  *
  * @package AISEOAssistant
  */
@@ -9,8 +9,11 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class AISEO_Gemini_Client {
+class AISEO_Gemini_Client implements AISEO_AI_Client_Interface {
+    use AISEO_AI_Client_Connection_Test_Trait;
+
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+    const PROVIDER = 'gemini';
     const MAX_OUTPUT_TOKENS = 3600;
     const REQUEST_TIMEOUT = 120;
 
@@ -38,20 +41,82 @@ class AISEO_Gemini_Client {
     }
 
     public function test_connection() {
-        if ( ! $this->has_api_key() ) {
-            return new WP_Error( 'aiseo_missing_api_key', 'APIキーを入力してください。' );
+        $result = $this->connection_test();
+
+        if ( 'success' === $result['status'] ) {
+            return true;
         }
 
-        $response = $this->request(
-            '接続テストです。「OK」とだけ返してください。',
-            16
+        return new WP_Error( 'aiseo_gemini_connection_test', $result['message'] );
+    }
+
+    public function connection_test() {
+        if ( ! $this->has_api_key() ) {
+            return $this->build_connection_test_result(
+                self::PROVIDER,
+                'error',
+                0,
+                0,
+                'APIキーを入力してください。'
+            );
+        }
+
+        $retry_count = 0;
+        $http_code = 0;
+        $response = $this->request_with_retry(
+            array(
+                'contents' => array(
+                    array(
+                        'parts' => array(
+                            array(
+                                'text' => '接続テストです。「OK」とだけ返してください。',
+                            ),
+                        ),
+                    ),
+                ),
+                'generationConfig' => array(
+                    'maxOutputTokens' => 5,
+                ),
+            ),
+            $retry_count,
+            $http_code
         );
 
         if ( is_wp_error( $response ) ) {
-            return $response;
+            $status = 'error';
+            if ( 'aiseo_gemini_busy' === $response->get_error_code() ) {
+                $status = 'warning';
+            }
+
+            return $this->build_connection_test_result(
+                self::PROVIDER,
+                $status,
+                $http_code,
+                $retry_count,
+                $response->get_error_message()
+            );
         }
 
-        return true;
+        return $this->build_connection_test_result(
+            self::PROVIDER,
+            'success',
+            $http_code,
+            $retry_count,
+            ''
+        );
+    }
+
+    public function getProviderInfo() {
+        return array(
+            'name' => 'Gemini',
+            'model' => 'gemini-3.5-flash',
+            'stability' => 4,
+            'speed' => 4,
+            'seo' => 5,
+            'cost' => 'low',
+            'recommended_for' => 'SEO記事',
+            'note' => '無料プランは混雑時に利用できない場合があります。',
+        );
     }
 
     public function generate_article( $keywords, $article_type, $tone = 'standard', array $site_profile = array(), $site_knowledge = '' ) {
@@ -101,10 +166,20 @@ class AISEO_Gemini_Client {
             ),
         );
 
-        $attempts = 2;
-        $response = null;
+        return $this->request_with_retry( $body );
+    }
 
-        for ( $i = 0; $i < $attempts; $i++ ) {
+    /**
+     * Gemini APIへのリクエストをリトライ付きで実行します。
+     *
+     * @param array $body リクエストボディ
+     * @return array|WP_Error
+     */
+    private function request_with_retry( $body, &$retry_count = 0, &$http_code = 0 ) {
+        $attempts = 5;
+        $retry_delays = array( 1, 2, 4, 8, 16 );
+
+        for ( $attempt = 0; $attempt < $attempts; $attempt++ ) {
             $response = wp_remote_post(
                 self::API_URL,
                 array(
@@ -117,37 +192,81 @@ class AISEO_Gemini_Client {
                 )
             );
 
+            $retry_count = $attempt;
+
             if ( is_wp_error( $response ) ) {
-                // 最後の試行でなければ短いバックオフして再試行
-                if ( $i + 1 < $attempts ) {
-                    sleep( 1 );
+                if ( $attempt + 1 < $attempts ) {
+                    sleep( $retry_delays[ $attempt ] );
                     continue;
                 }
 
                 return $response;
             }
 
-            break;
-        }
+            $status_code = wp_remote_retrieve_response_code( $response );
+            $http_code = $status_code;
+            $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        $status_code = wp_remote_retrieve_response_code( $response );
-        $body_json = json_decode( wp_remote_retrieve_body( $response ), true );
+            if ( in_array( $status_code, array( 429, 503 ), true ) ) {
+                if ( $attempt + 1 < $attempts ) {
+                    $delay = $this->get_retry_delay( $response, $retry_delays[ $attempt ] );
+                    sleep( $delay );
+                    continue;
+                }
 
-        if ( 200 > $status_code || 300 <= $status_code ) {
-            $message = 'Gemini APIへの接続に失敗しました。';
-            if ( is_array( $body_json ) && isset( $body_json['error']['message'] ) ) {
-                $message = $body_json['error']['message'];
-            } elseif ( is_wp_error( $response ) ) {
-                $message = $response->get_error_message();
+                return new WP_Error(
+                    'aiseo_gemini_busy',
+                    'Gemini APIが現在混雑しています。数分後にもう一度お試しください。'
+                );
             }
-            return new WP_Error( 'aiseo_gemini_error', $message );
+
+            if ( 200 > $status_code || 300 <= $status_code ) {
+                $message = 'Gemini APIへの接続に失敗しました。';
+                if ( is_array( $body_json ) && isset( $body_json['error']['message'] ) ) {
+                    $message = $body_json['error']['message'];
+                }
+
+                return new WP_Error( 'aiseo_gemini_error', $message );
+            }
+
+            if ( ! is_array( $body_json ) ) {
+                return new WP_Error( 'aiseo_invalid_response', 'Gemini APIのレスポンス形式が不正です。' );
+            }
+
+            return $body_json;
         }
 
-        if ( ! is_array( $body_json ) ) {
-            return new WP_Error( 'aiseo_invalid_response', 'Gemini APIのレスポンス形式が不正です。' );
+        return new WP_Error( 'aiseo_gemini_error', 'Gemini APIへの接続に失敗しました。' );
+    }
+
+    /**
+     * Retry-Afterヘッダーまたは指数バックオフに基づく待機時間を取得します。
+     *
+     * @param array|WP_Error $response wp_remote_postのレスポンス
+     * @param int $default_delay デフォルトのバックオフ遅延秒
+     * @return int
+     */
+    private function get_retry_delay( $response, $default_delay ) {
+        if ( is_wp_error( $response ) ) {
+            return $default_delay;
         }
 
-        return $body_json;
+        $retry_after = wp_remote_retrieve_header( $response, 'retry-after' );
+        if ( '' === trim( (string) $retry_after ) ) {
+            return $default_delay;
+        }
+
+        if ( ctype_digit( $retry_after ) ) {
+            return max( 1, absint( $retry_after ) );
+        }
+
+        $timestamp = strtotime( $retry_after );
+        if ( false !== $timestamp ) {
+            $delay = $timestamp - time();
+            return $delay > 0 ? $delay : $default_delay;
+        }
+
+        return $default_delay;
     }
 
     private function extract_text( $response ) {

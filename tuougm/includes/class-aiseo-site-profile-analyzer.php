@@ -1,6 +1,6 @@
 <?php
 /**
- * Site profile analyzer for AI SEO Assistant.
+ * Site profile analyzer for TUOUGM.
  *
  * @package AISEOAssistant
  */

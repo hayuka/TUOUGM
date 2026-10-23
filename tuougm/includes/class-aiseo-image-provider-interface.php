@@ -1,6 +1,6 @@
 <?php
 /**
- * Image provider contract for AI SEO Assistant.
+ * Image provider contract for TUOUGM.
  *
  * @package AISEOAssistant
  */

@@ -20,7 +20,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
 }
 ?>
 <div class="wrap">
-    <h1>AI SEO Assistant</h1>
+    <h1>TUOUGM</h1>
 
     <?php foreach ( $messages as $message ) : ?>
         <div class="notice notice-<?php echo esc_attr( $message['type'] ); ?> is-dismissible">
@@ -40,6 +40,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
             <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
             <input type="hidden" name="aiseo_action" value="save_settings">
 
+            <h2>APIキー</h2>
             <table class="form-table" role="presentation">
                 <tr>
                     <th scope="row"><label for="gemini_api_key">Gemini APIキー</label></th>
@@ -54,6 +55,88 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
                         >
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row"><label for="openai_api_key">OpenAI APIキー</label></th>
+                    <td>
+                        <input
+                            type="password"
+                            id="openai_api_key"
+                            name="openai_api_key"
+                            value="<?php echo esc_attr( $openai_api_key ); ?>"
+                            class="regular-text"
+                            autocomplete="off"
+                        >
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="claude_api_key">Anthropic Claude APIキー</label></th>
+                    <td>
+                        <input
+                            type="password"
+                            id="claude_api_key"
+                            name="claude_api_key"
+                            value="<?php echo esc_attr( $claude_api_key ); ?>"
+                            class="regular-text"
+                            autocomplete="off"
+                        >
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="stability_api_key">Stability AI APIキー</label></th>
+                    <td>
+                        <input
+                            type="password"
+                            id="stability_api_key"
+                            name="stability_api_key"
+                            value="<?php echo esc_attr( $stability_api_key ); ?>"
+                            class="regular-text"
+                            autocomplete="off"
+                        >
+                    </td>
+                </tr>
+            </table>
+
+            <h2>使用するAI</h2>
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row"><label for="text_provider">記事生成API</label></th>
+                    <td>
+                        <select id="text_provider" name="text_provider">
+                            <?php foreach ( $text_providers as $value => $label ) : ?>
+                                <option value="<?php echo esc_attr( $value ); ?>" <?php selected( $text_provider_status['provider'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="description">記事生成・オリジナル性ブースター・画像プロンプト自動生成に使用するAIを選択します。選択したAPIのキーが未入力の場合は接続時にエラーになります。</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="image_provider">画像生成API</label></th>
+                    <td>
+                        <select id="image_provider" name="image_provider">
+                            <?php foreach ( $image_providers as $value => $label ) : ?>
+                                <option value="<?php echo esc_attr( $value ); ?>" <?php selected( $image_provider_status['provider'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">画像生成機能</th>
+                    <td>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="image_generation_enabled"
+                                value="1"
+                                <?php checked( $image_provider_status['enabled'] ); ?>
+                            >
+                            アイキャッチ・本文内画像のAI生成を有効にする
+                        </label>
+                        <p class="description">
+                            Gemini/OpenAIの画像生成モデルは、多くの場合<strong>課金アカウントの有効化</strong>が必要です（無料枠では利用できないことがあります）。Stability AIは別途クレジット購入が必要です。<br>
+                            利用可能な状態になっていない場合はチェックを外したままにしてください。記事生成・サイト学習など他の機能には影響しません。
+                        </p>
+                    </td>
+                </tr>
             </table>
 
             <?php submit_button( '設定を保存' ); ?>
@@ -62,7 +145,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
         <form method="post" action="">
             <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
             <input type="hidden" name="aiseo_action" value="test_connection">
-            <?php submit_button( 'Gemini接続テスト', 'secondary' ); ?>
+            <?php submit_button( '記事生成APIの接続テスト', 'secondary' ); ?>
         </form>
     <?php elseif ( 'profile' === $current_tab ) : ?>
         <h2>サイトプロファイル</h2>
@@ -181,20 +264,14 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
         <table class="widefat striped" style="max-width: 720px;">
             <tbody>
                 <tr>
-                    <th scope="row">Provider</th>
-                    <td><?php echo esc_html( $image_provider_status['provider'] ); ?></td>
+                    <th scope="row">画像生成機能</th>
+                    <td>
+                        <?php echo $image_provider_status['enabled'] ? '有効' : '無効（設定タブで有効化できます）'; ?>
+                    </td>
                 </tr>
                 <tr>
-                    <th scope="row">モデル</th>
-                    <td><?php echo esc_html( $image_provider_status['model'] ); ?></td>
-                </tr>
-                <tr>
-                    <th scope="row">APIバージョン</th>
-                    <td><?php echo esc_html( $image_provider_status['api_version'] ); ?></td>
-                </tr>
-                <tr>
-                    <th scope="row">エンドポイント</th>
-                    <td><code><?php echo esc_html( $image_provider_status['endpoint_base'] ); ?></code></td>
+                    <th scope="row">選択中Provider</th>
+                    <td><?php echo esc_html( isset( $image_providers[ $image_provider_status['provider'] ] ) ? $image_providers[ $image_provider_status['provider'] ] : $image_provider_status['provider'] ); ?></td>
                 </tr>
                 <tr>
                     <th scope="row">APIキー</th>
@@ -202,7 +279,7 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
                 </tr>
             </tbody>
         </table>
-        <p class="description">Provider/モデル/エンドポイントはコード側のデフォルト設定です。APIバージョン変更時はProviderクラスのみを修正すれば記事生成側には影響しません。</p>
+        <p class="description">モデル名・エンドポイントなどの詳細は各Providerクラス（<code>includes/class-aiseo-*-image-provider.php</code>）内のデフォルト設定です。API仕様変更時はProviderクラスのみを修正すれば他の機能には影響しません。</p>
     <?php else : ?>
         <?php if ( ! empty( $site_profile ) ) : ?>
             <div class="notice notice-info inline">
@@ -213,6 +290,10 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
         <form method="post" action="">
             <?php wp_nonce_field( AISEO_Admin::NONCE_ACTION, AISEO_Admin::NONCE_NAME ); ?>
             <input type="hidden" name="aiseo_action" value="generate_article">
+
+            <?php if ( ! empty( $text_provider_info ) && ! empty( $text_provider_connection ) ) : ?>
+                <?php require AISEO_ASSISTANT_DIR . 'templates/provider-status-card.php'; ?>
+            <?php endif; ?>
 
             <table class="form-table" role="presentation">
                 <tr>
@@ -292,38 +373,49 @@ if ( ! in_array( $current_tab, array( 'generate', 'profile', 'media', 'settings'
                 </table>
 
                 <h3>画像生成</h3>
-                <?php if ( $featured_image_attachment_id > 0 ) : ?>
-                    <p>
-                        <strong>設定中のアイキャッチ画像:</strong><br>
-                        <?php echo wp_kses_post( wp_get_attachment_image( $featured_image_attachment_id, 'medium' ) ); ?>
-                    </p>
+                <?php if ( ! $image_provider_status['enabled'] ) : ?>
+                    <div class="notice notice-warning inline">
+                        <p>
+                            画像生成機能は現在無効です。選択した画像生成API（<?php echo esc_html( isset( $image_providers[ $image_provider_status['provider'] ] ) ? $image_providers[ $image_provider_status['provider'] ] : $image_provider_status['provider'] ); ?>）によっては<strong>課金アカウント</strong>の有効化が必要です。
+                            利用可能な状態になったら、<a href="<?php echo esc_url( $settings_url ); ?>">設定タブ</a>でAPI・APIキーを選択し、画像生成を有効にしてください。
+                        </p>
+                    </div>
+                <?php else : ?>
+                    <?php if ( $featured_image_attachment_id > 0 ) : ?>
+                        <p>
+                            <strong>設定中のアイキャッチ画像:</strong><br>
+                            <?php echo wp_kses_post( wp_get_attachment_image( $featured_image_attachment_id, 'medium' ) ); ?>
+                        </p>
+                    <?php endif; ?>
+                    <table class="form-table" role="presentation">
+                        <tr>
+                            <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
+                            <td>
+                                <input
+                                    type="text"
+                                    id="image_prompt"
+                                    name="image_prompt"
+                                    class="regular-text"
+                                    placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真"
+                                    value="<?php echo esc_attr( $generated_image_prompt ); ?>"
+                                >
+                                <p class="description">
+                                    アイキャッチ画像は推奨サイズ
+                                    <?php echo esc_html( $recommended_featured_size['recommended_width'] . 'x' . $recommended_featured_size['recommended_height'] ); ?>
+                                    （<a href="<?php echo esc_url( $media_url ); ?>">画像設定タブ</a>で確認）を参考に生成されます。
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
                 <?php endif; ?>
-                <table class="form-table" role="presentation">
-                    <tr>
-                        <th scope="row"><label for="image_prompt">画像生成プロンプト</label></th>
-                        <td>
-                            <input
-                                type="text"
-                                id="image_prompt"
-                                name="image_prompt"
-                                class="regular-text"
-                                placeholder="例: 木製デスクの上でノートPCを使う日本人女性の写真"
-                                value="<?php echo esc_attr( $generated_image_prompt ); ?>"
-                            >
-                            <p class="description">
-                                アイキャッチ画像は推奨サイズ
-                                <?php echo esc_html( $recommended_featured_size['recommended_width'] . 'x' . $recommended_featured_size['recommended_height'] ); ?>
-                                （<a href="<?php echo esc_url( $media_url ); ?>">画像設定タブ</a>で確認）を参考に生成されます。
-                            </p>
-                        </td>
-                    </tr>
-                </table>
 
                 <p>
                     <button type="submit" name="aiseo_action" value="save_draft" class="button button-primary">下書き保存</button>
                     <button type="submit" name="aiseo_action" value="run_booster" class="button button-secondary">オリジナル性ブースターを実行</button>
-                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='featured';">アイキャッチ画像を生成</button>
-                    <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='inline';">本文内画像を生成</button>
+                    <?php if ( $image_provider_status['enabled'] ) : ?>
+                        <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='featured';">アイキャッチ画像を生成</button>
+                        <button type="submit" name="aiseo_action" value="generate_image" class="button button-secondary" onclick="document.getElementById('image_purpose_hidden').value='inline';">本文内画像を生成</button>
+                    <?php endif; ?>
                 </p>
             </form>
         <?php endif; ?>

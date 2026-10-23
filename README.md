@@ -1,8 +1,8 @@
-# AI SEO Assistant
+# TUOUGM
 
 ## ■ 概要
 
-AI Content Engineは、WordPress上で動作するAI記事生成プラグインです。  
+TUOUGMは、WordPress上で動作するAI記事生成プラグインです。
 単なる記事生成ではなく、「コンテンツの人格」を設計するためのツールです。
 
 SEO記事生成・LP作成・コンセプト記事などを、同一のUIからモード別に生成できます。
@@ -80,7 +80,7 @@ SEO記事生成・LP作成・コンセプト記事などを、同一のUIから�
 
 です。
 
-SEO最適化だけではなく、  
+SEO最適化だけではなく、
 “読まれる理由そのもの”を設計することを目的としています。
 
 ---
@@ -96,14 +96,28 @@ SEO最適化だけではなく、
 
 ## ■ コンセプト
 
-> 記事を作るのではない。  
+> 記事を作るのではない。
 > 世界観を生成する。
 
 ---
 
 ## ■ 補足（重要）
 
-このツールは大量生産向けではなく、  
+このツールは大量生産向けではなく、
 「コンテンツの質と一貫性」を重視するプロジェクト向けに設計されています。
 
-これを機にサービス名をAI Content Engineに変更
+
+
+## ローカル開発
+
+開発フォルダ: `/Users/haneyukataku/Desktop/workspace/TUOUGM`
+
+```sh
+docker compose up -d
+```
+
+- サイト: http://localhost:8088
+- 管理画面: http://localhost:8088/wp-admin/
+- プラグイン: `tuougm/tuougm.php`
+
+既存のWordPressデータ・管理者・API設定を引き継ぐため、外部ボリュームとDB名 `aiseo_wordpress`、内部の `aiseo_` 識別子は互換性のため維持しています。

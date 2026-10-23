@@ -11,13 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AISEO_Originality_Booster {
     /**
-     * Gemini client instance.
+     * AI text-generation client instance.
      *
-     * @var AISEO_Gemini_Client
+     * @var AISEO_AI_Client_Interface
      */
     private $client;
 
-    public function __construct( AISEO_Gemini_Client $client ) {
+    public function __construct( AISEO_AI_Client_Interface $client ) {
         $this->client = $client;
     }
 

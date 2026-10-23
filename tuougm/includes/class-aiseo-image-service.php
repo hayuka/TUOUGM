@@ -1,6 +1,6 @@
 <?php
 /**
- * Image generation service for AI SEO Assistant.
+ * Image generation service for TUOUGM.
  *
  * Coordinates the image provider, media library storage, attachment meta
  * and shortcode generation. Admin/article-generation code should depend on

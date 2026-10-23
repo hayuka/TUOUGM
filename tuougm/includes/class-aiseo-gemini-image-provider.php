@@ -1,6 +1,6 @@
 <?php
 /**
- * Gemini image generation provider for AI SEO Assistant.
+ * Gemini image generation provider for TUOUGM.
  *
  * Absorbs Gemini-specific endpoint / request / response details so that
  * API version or model changes only require edits in this class.

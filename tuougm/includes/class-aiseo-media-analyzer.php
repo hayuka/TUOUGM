@@ -1,6 +1,6 @@
 <?php
 /**
- * Media analyzer for AI SEO Assistant.
+ * Media analyzer for TUOUGM.
  *
  * Looks at existing featured images to recommend a size for newly
  * generated featured images.

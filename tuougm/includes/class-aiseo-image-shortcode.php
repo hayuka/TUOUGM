@@ -1,6 +1,6 @@
 <?php
 /**
- * [aiseo_image] shortcode for AI SEO Assistant.
+ * [aiseo_image] shortcode for TUOUGM.
  *
  * Generated images are inserted into post content as a shortcode instead of
  * a raw <img> tag so the output markup can change centrally later.

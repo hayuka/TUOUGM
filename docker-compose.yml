@@ -1,3 +1,5 @@
+name: tuougm
+
 services:
   wordpress:
     image: wordpress:6.5-php8.2-apache
@@ -13,7 +15,7 @@ services:
       WORDPRESS_DEBUG: "1"
     volumes:
       - wordpress_data:/var/www/html
-      - ./ai-seo-assistant:/var/www/html/wp-content/plugins/ai-seo-assistant
+      - ./tuougm:/var/www/html/wp-content/plugins/tuougm
 
   db:
     image: mysql:8.0
@@ -27,4 +29,8 @@ services:
 
 volumes:
   wordpress_data:
+    external: true
+    name: aiseo-wordpress_wordpress_data
   db_data:
+    external: true
+    name: aiseo-wordpress_db_data

@@ -1,6 +1,6 @@
 <?php
 /**
- * Prompt builder for AI SEO Assistant.
+ * Prompt builder for TUOUGM.
  *
  * @package AISEOAssistant
  */
