@@ -114,3 +114,17 @@ header.php:98–105は **Google Fonts → Modaal CSS → css/module.css → css/
 `.player` は基礎定義と3020行付近の追記、3396行付近のモバイル上書きに分散。`.player_title`、`.m_cnt_header`、`.mg_modal` 等の反復も確認。ただし別media条件下の反復をすべて不要な重複とは判断しない。整理時はカスケードと各画面の視覚比較が必要。
 
 補足: コア `wp-includes/general-template.php` をコンテナ内で読み取り確認。get_footerはlocate_templateのload_once=true、get_template_partはfalse。footerの呼び出しが二度あっても同一PHPの再出力は抑制される一方、get_footerアクションは呼び出しごとに発火する。Story部分テンプレートの自己再帰は抑制されない。
+
+## LATEST RELEASE動的表示（2026-10-23、レビュー待ち）
+
+`front-page.php` のLATEST RELEASEは `music_album` の公開済み・パスワードなし・`required_level` 未設定または0以下を、`menu_order ASC, ID DESC` で1件取得する。取得後も会員制限を確認し、既存 `tuougm_get_album_data()` を使ってジャケット・タイトル・album_type・本文・album_tracks順の曲名・PLAY ALL IDを描画する。該当アルバムなし、またはACF無効ならセクションを表示しない。曲一覧では非公開・パスワード付きトラックを表示しない。
+
+英語時はalbum_title_en/track_title_enを優先し、未設定なら通常タイトルへ戻す。説明は取得アルバムの本文を共通利用する。新しい英語本文フィールドは追加しない。既存HTMLクラスを維持し、セクション以外の直書き表示は今回の対象外。
+
+ユーザー指示により管理画面の並び替えUI・保存処理は追加していない。既存のmenu_orderをそのまま参照し、管理画面・プレイヤーJS・RESTは未変更。並び順やDBも変更していない。
+
+分離テストでクエリ条件、表示項目、ACF曲順、英語フォールバック、非公開曲の除外、該当なし・会員限定時の非表示を確認。ローカル日英トップはHTTP 200、既存アルバムID578（STACKISM）・曲5件を表示し、PHP警告なし。実データの並び替え操作や、多言語投稿割当の全組み合わせは未検証。
+
+アルバム種別は登録値を使用し、日本語表示時の `EP` だけ `MINI ALBUM` に変換する。英語では `EP` を維持し、その他の値・空欄は補完しない。DBの登録値は変更しない。
+
+説明文の言語別対応: LATEST RELEASEではtextareaの `album_description_ja` / `album_description_en` を対象アルバムIDで取得する。日本語・英語を混在させず、未入力時は説明を非表示とする。HTMLは文字としてエスケープし、改行をbrへ変換。アルバム本文および既存プレイヤー・RESTのdescriptionは変更しない。

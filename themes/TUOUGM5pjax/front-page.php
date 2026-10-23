@@ -50,55 +50,74 @@ if($loc){
 </div>
 </div>
 
-<?php if ('en_US' == $locale){ ?>
+<?php
+$latest_album = array();
+if ( function_exists( 'get_field' ) ) {
+    $release_query = new WP_Query( array(
+        'post_type'      => 'music_album',
+        'post_status'    => 'publish',
+        'has_password'   => false,
+        'posts_per_page' => 1,
+        'no_found_rows'  => true,
+        'orderby'       => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
+        'meta_query'    => array(
+            'relation' => 'OR',
+            array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
+            array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+        ),
+    ) );
+    if ( ! empty( $release_query->posts ) ) {
+        $latest_album = tuougm_get_album_data( $release_query->posts[0]->ID );
+        if ( ! empty( $latest_album ) && $latest_album['required_level'] > 0 ) {
+            $latest_album = array();
+        }
+    }
+}
+$is_release_english = ( 'en_US' === $locale );
+if ( $latest_album ) :
+    $release_title = $is_release_english && ! empty( $latest_album['title_en'] )
+        ? $latest_album['title_en'] : $latest_album['title'];
+    $release_type = $latest_album['type'];
+    if ( is_array( $release_type ) ) {
+        $release_type = $release_type['label'] ?? $release_type['value'] ?? '';
+    }
+    if ( ! $is_release_english && 'EP' === $release_type ) {
+        $release_type = 'MINI ALBUM';
+    }
+    $release_description = (string) get_field(
+        $is_release_english ? 'album_description_en' : 'album_description_ja',
+        (int) $latest_album['id']
+    );
+?>
 <section class="sec_info def_sec">
 <div class="inner_1200">
 <h2 class="ttl_sec_info"><span>LATEST RELEASE</span></h2>
-<p class="sub_ttl_info">Updating with the latest releases</p>
+<p class="sub_ttl_info"><?php echo $is_release_english ? 'Updating with the latest releases' : '最新のリリース'; ?></p>
 <div class="wrap_release flex_wrap">
-<figure><img src="<?php echo get_template_directory_uri(); ?>/img/album4.png" alt=""></figure>
+<figure><?php if ( $latest_album['artwork'] ) : ?><img src="<?php echo esc_url( $latest_album['artwork'] ); ?>" alt="<?php echo esc_attr( $release_title ); ?>"><?php endif; ?></figure>
 <div class="release_cnt">
-<h3 class="eng"><span>MINI ALBUM</span>STACKISM</h3>
-<p>Plastic kits stacked high. Excuses stacked higher.<br>
-You've been running from reality. Are you ready to face it?</p>
+<h3 class="eng"><span><?php echo esc_html( (string) $release_type ); ?></span><?php echo esc_html( $release_title ); ?></h3>
+<?php if ( '' !== trim( $release_description ) ) : ?>
+<p><?php echo nl2br( esc_html( $release_description ), false ); ?></p>
+<?php endif; ?>
 <ul class="list_release">
-<li>Stackism</li>
-<li>BUILD NOTHING! MAKE EVERYTHING!</li>
-<li>家族の恨み買っても買う</li>
-<li>RX-78</li>
-<li>ガンプラ作りは来世で本気だす</li>
-<li>Something Else</li>
+<?php foreach ( $latest_album['tracks'] as $release_track ) : ?>
+<?php
+    if ( 'publish' !== get_post_status( $release_track['id'] ) || get_post_field( 'post_password', $release_track['id'] ) ) {
+        continue;
+    }
+    $release_track_title = $is_release_english && ! empty( $release_track['title_en'] )
+        ? $release_track['title_en'] : $release_track['title'];
+?>
+<li><?php echo esc_html( $release_track_title ); ?></li>
+<?php endforeach; ?>
 </ul>
-<p class="btn"><a href="javascript:void(0)" class="all_btn" data-player-album="578">PLAY ALL</a></p>
+<p class="btn"><a href="javascript:void(0)" class="all_btn" data-player-album="<?php echo esc_attr( $latest_album['id'] ); ?>">PLAY ALL</a></p>
 </div>
 </div>
 </div>
 </section>
-<?php }else{ ?>
-<section class="sec_info def_sec">
-<div class="inner_1200">
-<h2 class="ttl_sec_info"><span>LATEST RELEASE</span></h2>
-<p class="sub_ttl_info">最新のリリース</p>
-<div class="wrap_release flex_wrap">
-<figure><img src="<?php echo get_template_directory_uri(); ?>/img/album4.png" alt=""></figure>
-<div class="release_cnt">
-<h3 class="eng"><span>MINI ALBUM</span>STACKISM</h3>
-<p>積み上げたガンプラ、積み上げた言い訳。<br>
-現実から目を背けていたお前達、現実と向き合う準備はできているか⁉︎</p>
-<ul class="list_release">
-<li>Stackism</li>
-<li>BUILD NOTHING! MAKE EVERYTHING!</li>
-<li>家族の恨み買っても買う</li>
-<li>RX-78</li>
-<li>ガンプラ作りは来世で本気だす</li>
-<li>Something Else</li>
-</ul>
-<p class="btn"><a href="javascript:void(0)" class="all_btn" data-player-album="578">PLAY ALL</a></p>
-</div>
-</div>
-</div>
-</section>
-<?php } ?>
+<?php endif; ?>
 
 <section id="anc01" class="def_sec">
 <div class="inner_1200">
