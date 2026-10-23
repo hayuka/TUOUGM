@@ -63,6 +63,7 @@ if($loc){
 You've been running from reality. Are you ready to face it?</p>
 <ul class="list_release">
 <li>Stackism</li>
+<li>BUILD NOTHING! MAKE EVERYTHING!</li>
 <li>家族の恨み買っても買う</li>
 <li>RX-78</li>
 <li>ガンプラ作りは来世で本気だす</li>
@@ -86,6 +87,7 @@ You've been running from reality. Are you ready to face it?</p>
 現実から目を背けていたお前達、現実と向き合う準備はできているか⁉︎</p>
 <ul class="list_release">
 <li>Stackism</li>
+<li>BUILD NOTHING! MAKE EVERYTHING!</li>
 <li>家族の恨み買っても買う</li>
 <li>RX-78</li>
 <li>ガンプラ作りは来世で本気だす</li>
