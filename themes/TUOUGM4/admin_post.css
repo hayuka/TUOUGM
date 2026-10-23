@@ -1,0 +1,30 @@
+@charset "utf-8";
+ 
+.postbox_estate {
+    padding:10px;
+    line-height:1.2;
+}
+.postbox_estate h4 {
+    margin:0 0 8px 0;
+    padding-bottom:10px;
+    border-bottom:solid 1px #dfdfdf;
+}
+.postbox_estate p {
+    margin:0 0 8px 0;
+}
+.postbox_estate dl{border-bottom:solid 1px #dfdfdf;}
+.postbox_estate dl dt {
+    width:200px;
+    float:left;
+}
+.postbox_estate dl dd {
+    margin:0;
+    padding-bottom:8px;
+    margin-bottom:8px;
+	overflow: hidden; *zoom: 1;
+}
+.postbox_estate dl dd label {
+    display:inline-block;
+    margin-right:3px;
+}
+ 

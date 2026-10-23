@@ -1,36 +1,44 @@
-name: tuougm
+name: tuougm-site
 
 services:
   wordpress:
     image: wordpress:6.5-php8.2-apache
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
-      - "8088:80"
+      - "127.0.0.1:${WORDPRESS_PORT:-8088}:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: wordpress
-      WORDPRESS_DB_NAME: aiseo_wordpress
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      WORDPRESS_DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
       WORDPRESS_DEBUG: "1"
     volumes:
       - wordpress_data:/var/www/html
-      - ./tuougm:/var/www/html/wp-content/plugins/tuougm
+      - ./themes:/var/www/html/wp-content/themes
+      - ./plugins:/var/www/html/wp-content/plugins
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
+      - ./docker/apache/uploads.conf:/etc/apache2/conf-enabled/zz-uploads.conf:ro
 
   db:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: aiseo_wordpress
-      MYSQL_USER: wordpress
-      MYSQL_PASSWORD: wordpress
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysql --protocol=TCP -h 127.0.0.1 -u root -e "SELECT 1" >/dev/null 2>&1']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
 volumes:
   wordpress_data:
-    external: true
-    name: aiseo-wordpress_wordpress_data
+    name: tuougm_site_wordpress_data
   db_data:
-    external: true
-    name: aiseo-wordpress_db_data
+    name: tuougm_site_db_data

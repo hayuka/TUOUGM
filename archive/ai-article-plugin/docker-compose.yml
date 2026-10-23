@@ -1,0 +1,36 @@
+name: tuougm
+
+services:
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    depends_on:
+      - db
+    ports:
+      - "8088:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: aiseo_wordpress
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./tuougm:/var/www/html/wp-content/plugins/tuougm
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: aiseo_wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  wordpress_data:
+    external: true
+    name: aiseo-wordpress_wordpress_data
+  db_data:
+    external: true
+    name: aiseo-wordpress_db_data

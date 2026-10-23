@@ -3,3 +3,13 @@
 .env
 .env.*
 !.env.example
+*.sql
+*.sql.gz
+/backups/
+/node_modules/
+/vendor/
+/themes/**/node_modules/
+/plugins/**/node_modules/
+*.log
+*.wpress
+/plugins/all-in-one-wp-migration/storage/
