@@ -117,3 +117,7 @@ PHP構文チェックの後、再び本番一覧を取得し、その時点の�
 - [GitHub Actions ワークフロー構文](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [Python ftplib / FTP_TLS](https://docs.python.org/3/library/ftplib.html)
 - [ロリポップ 明示的FTPS設定](https://lolipop.jp/manual/hp/w-ff-ftps/)
+
+## ターミナルからの操作
+
+GitHub CLIを利用する `./scripts/deploy.sh dry-run` / `./scripts/deploy.sh deploy` を追加。セットアップ、人間の承認、履歴照合と実行制限は [deployment-cli.md](deployment-cli.md) を参照。ワークフロー本体は変更していない。
