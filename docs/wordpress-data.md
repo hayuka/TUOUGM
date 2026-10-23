@@ -59,13 +59,13 @@ storyとstory_categoryは同じstoryスラッグ。`tuougm_story_request_filter(
 | --- | --- | --- |
 | membership_level | user meta | RESTのアルバム公開範囲、会員本文、管理者編集 |
 | sin_level | user meta、匿名時Cookie | 段階別コンテンツ解放 |
-| auth_key / pass | フォーム入力 | ハードコードの共有コードに照合。値は転記しない |
+| pass | フォーム入力 | SIN LEVEL解放コードに照合。値は転記しない |
 
 membershipは0匿名/未設定、1 MEMBER、2 SUPPORTER、3 PREMIUMという箇所と、管理者編集画面のARCHIVIST/KEEPERという表記が混在。`functions.php:836`の編集UI、:902の保存はmanage_optionsで制限するが値の許容範囲を限定していない。
 
 `page-members.php:28–65`: 匿名時はCookieのsin_levelをそのまま整数化、ログイン済みでmeta未設定の場合はCookie値をmetaへ保存する。GETアクセスでもこの書込みが生じ得るため、本調査では画面を開いていない。
 `page-request-access.php` は新規ユーザーへCookieのSIN値を継承。Cookieに署名やサーバー照合は確認できず、アクセス境界としての妥当性は要検討。
-`page-upgrade-access.php` はログインを要求し共有キー一致時にmembershipを上げる。POSTのnonce検証は確認できない。
+更新（2026-10-23、レビュー待ち）: `page-upgrade-access.php` の固定キー判定・membership更新・フォームは撤去。GET/POSTとも303で `/members/` へ転送する。`page-members.php` の不要なmembership用コード定義とUPGRADE ACCESS導線も撤去。SINコードと管理画面の設定は維持。
 
 SIN本文のinclude先はmemberbody1..4、会員本文はmemberbody_pre1..3。親テンプレートの変数に依存する。HTMLを表示しない制御と、画像/音源URLへのアクセス認可は区別する必要がある。
 

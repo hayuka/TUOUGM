@@ -18,6 +18,7 @@ $level_cnt = [
 $member_cnt = [
     1 => 'RE:NA STYLE BOOK',
     2 => 'UNRELEASED AUDIO',
+    3 => 'FUTURE ALBUMS',
 ];
 $error = false;
 $success = false;
@@ -83,12 +84,6 @@ function tuougm_get_membership_level(){
 
 	return intval($level);
 }
-
-$membershipCodes = [
-	'gunplasuki' => 2,
-	'kami'     => 3,
-];
-$maxmembership = max($membershipCodes);
 
 if(isset($_POST['pass'])){
 
@@ -206,11 +201,6 @@ window.addEventListener('load', () => {
 <div class="next_level flex_wrap_between"><p>NEXT ACCESS</p> <p>LEVEL <?php echo sprintf('%02d', $unlocked + 1); ?></p></div>
 <?php else: ?>
 <div class="next_level flex_wrap_between"><p>ALL LEVELS UNLOCKED</p></div>
-<?php endif; ?>
-<?php if(is_user_logged_in()) : ?>
-<?php if ($membershipLevel < 2): ?>
-<p class="btn_lup"><a href="<?php echo get_bloginfo('url'); ?>/members/upgrade-access/">UPGRADE ACCESS<span></span></a></p>
-<?php endif; ?>
 <?php endif; ?>
 </div>
 <div class="member_wrap flex_wrap">
