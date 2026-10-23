@@ -114,3 +114,9 @@ GA4はplayingイベント → sendMusicPlayEvent → `window.gtag('event','music
 ## 9. 次工程の検証表
 
 匿名/会員1/2/3でcatalogを比較し、初回・連続next・末尾next・repeat・失敗音源・空アルバム・同曲再選択を検証する。投稿曲ボタン/旧曲一覧/OSメディア操作で結果が一致するか、再生中に複数ページを往復して音声・イベント数・歌詞が維持されるか確認する。本調査では再生やアクセス権変更はしていない。
+
+## 前へボタンの更新（2026-10-23、レビュー待ち）
+
+現役JSに `updatePreviousButton()` を追加し、`updateUI()` と既存の `updateSeek()` から呼ぶ。1曲目かつ再生位置3秒未満でのみdisabledを付ける。timeupdate・500ms更新・一時停止時のUI更新・既存の曲頭戻し後のupdateSeekから同じ条件が反映される。isSeeking中もボタン状態は更新する。既存の前へクリック処理、2曲目以降、next/ended/repeatは変更していない。
+
+ローカルブラウザで、1曲目の3秒未満/3秒以上、再生中/一時停止中、押下直後の0秒とdisabled、ABOUTへのPJAX後の再生継続と曲頭戻しを確認。2曲目の3秒以上で曲頭戻し、その直後3秒未満で前曲へ戻る既存動作も確認。JavaScript構文・Compose構成・差分の空白チェックを通過。コミット・pushは未実施。

@@ -38,7 +38,15 @@
     return globalCurrentPlaylist[globalCurrentIndex] || null;
   }
 
+  function updatePreviousButton() {
+    $('.player').find('.player_send.pre').toggleClass(
+      'disabled',
+      globalCurrentIndex === 0 && (!globalCurrentAudio || globalCurrentAudio.currentTime < 3)
+    );
+  }
+
   function updateSeek() {
+    updatePreviousButton();
     if (isSeeking || !globalCurrentAudio) return;
     const duration = globalCurrentAudio.duration || 0;
     const currentTime = globalCurrentAudio.currentTime || 0;
@@ -222,7 +230,7 @@
     if (!ensureAudio().paused) {
       $('.player').find('.player_play').addClass('pause');
     }
-    if (globalCurrentIndex === 0) $('.player').find('.player_send.pre').addClass('disabled');
+    updatePreviousButton();
     if (globalCurrentIndex === globalCurrentPlaylist.length - 1 && isRepeat) {
       $('.player').find('.player_send.next').removeClass('disabled');
     }
