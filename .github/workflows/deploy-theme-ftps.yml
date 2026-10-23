@@ -1,0 +1,227 @@
+name: TUOUGM theme FTPS deployment
+run-name: Theme ${{ inputs.mode }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run lists all planned uploads; upload writes to production'
+        type: choice
+        options:
+          - dry-run
+          - upload
+        default: dry-run
+        required: true
+      reviewed_sha:
+        description: 'Upload only: full commit SHA reviewed in the preceding Dry Run'
+        type: string
+        default: ''
+      confirmation:
+        description: 'Upload only: type DEPLOY TUOUGM5pjax after backing up production'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tuougm-production-theme-ftps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'hayuka/TUOUGM' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: lolipop-production
+    steps:
+      - name: Validate explicit upload approval
+        env:
+          DEPLOY_MODE: ${{ inputs.mode }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DEPLOY_MODE" != "dry-run" && "$DEPLOY_MODE" != "upload" ]]; then
+            echo 'Invalid mode' >&2
+            exit 1
+          fi
+          if [[ "$DEPLOY_MODE" == "upload" ]]; then
+            [[ "$DEPLOY_CONFIRMATION" == 'DEPLOY TUOUGM5pjax' ]] || { echo 'Explicit upload confirmation required' >&2; exit 1; }
+            [[ "$REVIEWED_SHA" == "$GITHUB_SHA" ]] || { echo 'Reviewed full SHA must match this run' >&2; exit 1; }
+          fi
+
+      - name: Checkout selected main commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: PHP 8.2 syntax check (theme only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network none \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/themes/TUOUGM5pjax,dst=/theme,readonly" \
+            php:8.2-cli sh -c 'find /theme -type f -name "*.php" -print0 | xargs -0 -r -n 1 php -l'
+
+      - name: Plan or upload over explicit FTPS
+        env:
+          DEPLOY_MODE: ${{ inputs.mode }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          DEPLOY_CONFIRMATION: ${{ inputs.confirmation }}
+          FTPS_HOST: ${{ secrets.FTPS_HOST }}
+          FTPS_USERNAME: ${{ secrets.FTPS_USERNAME }}
+          FTPS_PASSWORD: ${{ secrets.FTPS_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PYTHON'
+          import ftplib
+          import os
+          from pathlib import Path
+          import ssl
+          import sys
+
+          SOURCE = Path("themes/TUOUGM5pjax")
+          DESTINATION = "/tuougm/wp-content/themes/TUOUGM5pjax"
+          MODE = os.environ["DEPLOY_MODE"]
+
+          class SafeFTPS(ftplib.FTP_TLS):
+              def storbinary(self, *args, **kwargs):
+                  if MODE != "upload":
+                      raise RuntimeError("Uploads forbidden in dry-run")
+                  return super().storbinary(*args, **kwargs)
+
+              def mkd(self, *args, **kwargs):
+                  if MODE != "upload":
+                      raise RuntimeError("Directory creation forbidden in dry-run")
+                  return super().mkd(*args, **kwargs)
+
+              def storlines(self, *args, **kwargs):
+                  raise RuntimeError("Unsupported write operation")
+
+              def delete(self, *args, **kwargs):
+                  raise RuntimeError("Deletion forbidden")
+
+              def rmd(self, *args, **kwargs):
+                  raise RuntimeError("Deletion forbidden")
+
+              def rename(self, *args, **kwargs):
+                  raise RuntimeError("Rename forbidden")
+
+
+          def deploy():
+              if MODE not in {"dry-run", "upload"}:
+                  raise RuntimeError("Invalid deployment mode")
+              if os.environ["GITHUB_REPOSITORY"] != "hayuka/TUOUGM" or os.environ["GITHUB_REF"] != "refs/heads/main":
+                  raise RuntimeError("Only hayuka/TUOUGM main is allowed")
+              if MODE == "upload":
+                  if os.environ["DEPLOY_CONFIRMATION"] != "DEPLOY TUOUGM5pjax":
+                      raise RuntimeError("Upload confirmation missing")
+                  if os.environ["REVIEWED_SHA"] != os.environ["GITHUB_SHA"]:
+                      raise RuntimeError("Reviewed SHA must match the selected main commit")
+
+              if not SOURCE.is_dir() or SOURCE.is_symlink():
+                  raise RuntimeError("Theme source missing or unsafe")
+              files = []
+              directories = set()
+              for path in sorted(SOURCE.rglob("*")):
+                  if path.is_symlink():
+                      raise RuntimeError("Symlink in theme source")
+                  relative = path.relative_to(SOURCE).as_posix()
+                  if any(char in relative for char in "\r\n"):
+                      raise RuntimeError("Unsafe source filename")
+                  if path.name == ".DS_Store":
+                      continue
+                  if path.name.startswith(".env") or path.suffix.lower() in {".sql", ".wpress", ".pem", ".key", ".log"}:
+                      raise RuntimeError("Unexpected sensitive or runtime file in theme source")
+                  if path.is_dir():
+                      directories.add(relative)
+                  elif path.is_file():
+                      files.append((relative, path))
+                  else:
+                      raise RuntimeError("Unsupported source entry")
+              if not files or not (SOURCE / "style.css").is_file() or not (SOURCE / "functions.php").is_file():
+                  raise RuntimeError("Incomplete theme source")
+
+              host = os.environ["FTPS_HOST"]
+              user = os.environ["FTPS_USERNAME"]
+              password = os.environ["FTPS_PASSWORD"]
+              if not host or not user or not password:
+                  raise RuntimeError("Required FTPS secrets missing")
+              if any(char in host for char in "/:@\r\n") or any(char in user + password for char in "\r\n"):
+                  raise RuntimeError("Invalid connection settings")
+
+              context = ssl.create_default_context()
+              context.minimum_version = ssl.TLSVersion.TLSv1_2
+              with SafeFTPS(context=context, timeout=60) as ftp:
+                  ftp.connect(host, 21)
+                  ftp.auth()                  # Explicit AUTH TLS; fail instead of plain FTP fallback.
+                  ftp.login(user, password)
+                  ftp.prot_p()                # Encrypt data connections, including directory listings.
+                  ftp.set_pasv(True)
+                  ftp.cwd(DESTINATION)       # Never create the destination root.
+                  if ftp.pwd().rstrip("/") != DESTINATION:
+                      raise RuntimeError("Unexpected destination directory")
+
+                  existing_files = set()
+                  existing_dirs = {""}
+
+                  def inspect(relative=""):
+                      remote = DESTINATION + ("/" + relative if relative else "")
+                      for name, facts in ftp.mlsd(remote):
+                          kind = facts.get("type", "")
+                          if kind in {"cdir", "pdir"}:
+                              continue
+                          if name in {".", ".."} or any(char in name for char in "/\r\n"):
+                              raise RuntimeError("Unsafe remote listing")
+                          child = relative + "/" + name if relative else name
+                          if child not in directories and not any(child == item[0] for item in files):
+                              continue       # Remote-only files are preserved and never traversed.
+                          if kind == "dir":
+                              if child not in directories:
+                                  raise RuntimeError("Remote directory conflicts with source file")
+                              existing_dirs.add(child)
+                              inspect(child)
+                          elif kind == "file":
+                              if child in directories:
+                                  raise RuntimeError("Remote file conflicts with source directory")
+                              existing_files.add(child)
+                          else:
+                              raise RuntimeError("Unsupported remote entry (including symlinks)")
+
+                  inspect()
+                  print("Mode:", MODE)
+                  print("Commit:", os.environ["GITHUB_SHA"])
+                  print("Fixed destination:", DESTINATION + "/")
+                  for directory in sorted(directories - existing_dirs, key=lambda x: (x.count("/"), x)):
+                      print("PLAN MKDIR", directory)
+                  for relative, path in files:
+                      print("PLAN", "OVERWRITE" if relative in existing_files else "CREATE", relative, path.stat().st_size, "bytes")
+                  print("Planned files:", len(files), "(all local theme files; not a content diff)")
+
+                  if MODE == "dry-run":
+                      print("DRY RUN complete: no STOR, MKD, DELE, RMD or rename operations performed.")
+                      return
+
+                  for directory in sorted(directories - existing_dirs, key=lambda x: (x.count("/"), x)):
+                      ftp.mkd(DESTINATION + "/" + directory)
+                  for relative, path in files:
+                      with path.open("rb") as source:
+                          ftp.storbinary("STOR " + DESTINATION + "/" + relative, source, blocksize=262144)
+                      ftp.voidcmd("TYPE I")
+                      if ftp.size(DESTINATION + "/" + relative) != path.stat().st_size:
+                          raise RuntimeError("Transferred size mismatch")
+                      print("UPLOADED", relative)
+                  print("Upload complete; remote-only files preserved.")
+
+
+          try:
+              deploy()
+          except Exception as error:
+              # Server replies can echo connection details; do not print exception messages.
+              print("Deployment failed (" + type(error).__name__ + "). Check secrets, TLS, permissions and fixed directory.", file=sys.stderr)
+              sys.exit(1)
+          PYTHON
