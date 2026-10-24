@@ -63,19 +63,66 @@ function bogo_language_link_text_change ($links) {
             $links[$key]['native_name'] = 'EN';
         }
 
-        // Track pages use the theme's `loc` query parameter for language display,
-        // rather than separate Bogo translation posts.
+        // Track pages use the same post for both languages, with the English
+        // version addressed through the /en/tracks/<slug>/ route.
         if ( is_singular( 'music_track' ) ) {
-            $track_url = get_permalink( get_queried_object_id() );
-            if ( 'en_US' === $value['locale'] ) {
-                $links[$key]['href'] = add_query_arg( 'loc', 'en_US', $track_url );
-            } elseif ( 'ja' === $value['locale'] ) {
-                $links[$key]['href'] = remove_query_arg( 'loc', $track_url );
-            }
+            $links[$key]['href'] = tuougm_get_track_language_url(
+                get_queried_object_id(),
+                $value['locale']
+            );
         }
     }
     return $links;
 }
+
+/**
+ * Return a music track URL for the requested display language.
+ * English uses a Bogo-style path without requiring a translated post.
+ *
+ * @param int    $track_id Track post ID.
+ * @param string $locale  Locale code.
+ * @return string
+ */
+function tuougm_get_track_language_url( $track_id, $locale ) {
+    $track = get_post( (int) $track_id );
+    if ( ! $track || 'music_track' !== $track->post_type ) {
+        return '';
+    }
+
+    $track_url = trailingslashit( get_option( 'home' ) )
+        . 'tracks/' . trailingslashit( $track->post_name );
+
+    return function_exists( 'bogo_url' )
+        ? bogo_url( $track_url, $locale )
+        : $track_url;
+}
+
+/**
+ * Put the English track route before Bogo's broader language-prefixed rules.
+ *
+ * @param array $rules Existing rewrite rules.
+ * @return array
+ */
+function tuougm_prepend_english_track_rewrite_rule( $rules ) {
+    $english_slug = function_exists( 'bogo_lang_slug' ) ? bogo_lang_slug( 'en_US' ) : 'en';
+    $rule = '^' . preg_quote( $english_slug, '#' ) . '/tracks/([^/]+)/?$';
+    $query = 'index.php?post_type=music_track&name=$matches[1]&lang=' . rawurlencode( $english_slug );
+    return array( $rule => $query ) + $rules;
+}
+add_filter( 'rewrite_rules_array', 'tuougm_prepend_english_track_rewrite_rule', 20, 1 );
+
+/**
+ * Refresh the stored rewrite rules once when the English track route changes.
+ */
+function tuougm_add_english_track_rewrite_rule() {
+    // Refresh the stored rewrite rules once when this route is introduced.
+    $rewrite_version = '2';
+    if ( get_option( 'tuougm_english_track_rewrite_version' ) !== $rewrite_version ) {
+        flush_rewrite_rules( false );
+        update_option( 'tuougm_english_track_rewrite_version', $rewrite_version, false );
+    }
+}
+add_action( 'init', 'tuougm_add_english_track_rewrite_rule', 20 );
 
 /*---------------------------------------------
  * 余計なcssを削除

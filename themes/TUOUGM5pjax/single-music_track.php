@@ -85,7 +85,7 @@ get_header();
 					<?php endif; ?>
 				</figure>
 				<div class="music_album_content music_track_info">
-					<p class="music_track_from_label eng"><?php echo esc_html( $is_english ? 'FROM ALBUM' : '収録アルバム' ); ?></p>
+					<p class="music_track_from_label eng">FROM ALBUM</p>
 					<p class="music_track_album_title eng"><?php echo esc_html( $album_title ); ?></p>
 					<h1 id="music-track-title" class="music_album_title music_track_heading eng"><?php echo esc_html( $track_title ); ?></h1>
 					<button type="button" class="tuougm-track-trigger music_track_detail_play" data-player-track="<?php echo esc_attr( $track['id'] ); ?>" aria-label="<?php echo esc_attr( sprintf( $is_english ? 'Play %s' : '「%s」を再生', $track_title ) ); ?>">
@@ -95,7 +95,7 @@ get_header();
 			</section>
 
 			<section class="music_track_about" aria-labelledby="music-track-about-title">
-				<h2 id="music-track-about-title" class="music_track_about_title eng"><?php echo esc_html( $is_english ? 'ABOUT THIS TRACK' : 'この曲について' ); ?></h2>
+				<h2 id="music-track-about-title" class="music_track_about_title eng">ABOUT THIS TRACK</h2>
 				<?php if ( '' !== trim( $track_description ) ) : ?>
 					<div class="music_track_description"><?php echo wp_kses_post( $track_description ); ?></div>
 			<?php endif; ?>
