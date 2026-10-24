@@ -24,6 +24,21 @@
 		}
 	}
 
+	function scrollToCurrentHash(url) {
+		var hash = new URL(url || window.location.href, window.location.href).hash;
+		if (!hash) return;
+
+		var targetId;
+		try {
+			targetId = decodeURIComponent(hash.slice(1));
+		} catch (error) {
+			targetId = hash.slice(1);
+		}
+
+		var target = document.getElementById(targetId);
+		if (target) target.scrollIntoView({ block: 'start' });
+	}
+
 	$(function() {
 		if (typeof Swup === 'undefined') {
 			return;
@@ -41,6 +56,9 @@
 			if (typeof window.tuougmInitPage === 'function') {
 				window.tuougmInitPage();
 			}
+			window.requestAnimationFrame(function() {
+				scrollToCurrentHash(url);
+			});
 		});
 
 		window.tuougmSwup = swup;
