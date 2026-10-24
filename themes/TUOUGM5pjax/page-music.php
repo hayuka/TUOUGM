@@ -73,7 +73,11 @@ get_header();
 									<?php foreach ( $album_tracks as $track ) : ?>
 										<?php $track_title = $is_english && ! empty( $track['title_en'] ) ? $track['title_en'] : $track['title']; ?>
 										<li class="music_track_item">
-											<a class="music_track_title" href="<?php echo esc_url( get_permalink( (int) $track['id'] ) ); ?>"><?php echo esc_html( $track_title ); ?></a>
+											<?php $track_url = get_permalink( (int) $track['id'] ); ?>
+											<?php if ( $is_english ) : ?>
+												<?php $track_url = add_query_arg( 'loc', 'en_US', $track_url ); ?>
+											<?php endif; ?>
+											<a class="music_track_title" href="<?php echo esc_url( $track_url ); ?>"><?php echo esc_html( $track_title ); ?></a>
 											<button type="button" class="tuougm-track-trigger music_track_play" data-player-track="<?php echo esc_attr( $track['id'] ); ?>" aria-label="<?php echo esc_attr( sprintf( $is_english ? 'Play %s' : '「%s」を再生', $track_title ) ); ?>"><span aria-hidden="true">▶</span></button>
 										</li>
 									<?php endforeach; ?>

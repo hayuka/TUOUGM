@@ -2,6 +2,23 @@
 <?php
 $loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['loc'] ) : '';
 $locale = 'en_US' === $loc ? 'en_US' : get_locale();
+if ( is_singular( 'music_track' ) ) {
+	$track_meta_id = get_queried_object_id();
+	$track_meta_title = get_the_title( $track_meta_id );
+	$track_meta_description = function_exists( 'get_field' )
+		? (string) get_field( 'en_US' === $locale ? 'track_description_en' : 'track_description_ja', $track_meta_id )
+		: '';
+	if ( 'en_US' === $locale && function_exists( 'get_field' ) ) {
+		$track_meta_title_en = get_field( 'track_title_en', $track_meta_id );
+		if ( $track_meta_title_en ) {
+			$track_meta_title = $track_meta_title_en;
+		}
+	}
+	$ttl_og = $track_meta_title . ' | TUOUGM';
+	$disc_og = '' !== trim( wp_strip_all_tags( $track_meta_description ) )
+		? wp_trim_words( wp_strip_all_tags( $track_meta_description ), 32 )
+		: get_bloginfo( 'description' );
+}
 if ('en_US' == $locale){ 
 ?>
 <html lang="en">
@@ -29,6 +46,13 @@ if ( is_front_page() ) {
   } else {
     $desc = wp_trim_words(strip_tags(get_the_content()), 120);
   }
+} elseif ( is_singular('music_track') ) {
+  $track_meta_description = function_exists( 'get_field' )
+    ? (string) get_field( 'track_description_en', get_queried_object_id() )
+    : '';
+  $desc = '' !== trim( wp_strip_all_tags( $track_meta_description ) )
+    ? wp_trim_words( wp_strip_all_tags( $track_meta_description ), 120 )
+    : "An industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
 } elseif ( is_archive() ) {
   $desc = "An industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
 } else {
@@ -50,6 +74,13 @@ if ( is_front_page() ) {
   } else {
     $desc = wp_trim_words(strip_tags(get_the_content()), 120);
   }
+} elseif ( is_singular('music_track') ) {
+  $track_meta_description = function_exists( 'get_field' )
+    ? (string) get_field( 'track_description_ja', get_queried_object_id() )
+    : '';
+  $desc = '' !== trim( wp_strip_all_tags( $track_meta_description ) )
+    ? wp_trim_words( wp_strip_all_tags( $track_meta_description ), 120 )
+    : "ガンプラをテーマにした音楽プロジェクトTUOUGM。";
 } elseif ( is_archive() ) {
   $desc = "ガンプラ×インダストリアルメタルプロジェクトTUOUGMの楽曲・リリース・動画など最新情報一覧。";
 } else {

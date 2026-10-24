@@ -62,6 +62,17 @@ function bogo_language_link_text_change ($links) {
             $links[$key]['title'] = 'EN';
             $links[$key]['native_name'] = 'EN';
         }
+
+        // Track pages use the theme's `loc` query parameter for language display,
+        // rather than separate Bogo translation posts.
+        if ( is_singular( 'music_track' ) ) {
+            $track_url = get_permalink( get_queried_object_id() );
+            if ( 'en_US' === $value['locale'] ) {
+                $links[$key]['href'] = add_query_arg( 'loc', 'en_US', $track_url );
+            } elseif ( 'ja' === $value['locale'] ) {
+                $links[$key]['href'] = remove_query_arg( 'loc', $track_url );
+            }
+        }
     }
     return $links;
 }
