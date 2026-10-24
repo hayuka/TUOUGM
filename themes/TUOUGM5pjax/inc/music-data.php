@@ -15,10 +15,11 @@
 function tuougm_get_album_data($album_id) {
 
     $album_id = (int) $album_id;
+	$album_post = $album_id ? get_post($album_id) : null;
 
-    if (!$album_id || get_post_type($album_id) !== 'music_album') {
-    return [];
-}
+    if (!$album_post || $album_post->post_type !== 'music_album' || $album_post->post_status !== 'publish' || $album_post->post_password !== '') {
+        return [];
+    }
 
     $album = [
         'id'             => (string) $album_id,
@@ -68,10 +69,11 @@ function tuougm_get_album_data($album_id) {
 function tuougm_get_track_data($track_id) {
 
     $track_id = (int) $track_id;
+	$track_post = $track_id ? get_post($track_id) : null;
 
-    if (!$track_id || get_post_type($track_id) !== 'music_track') {
-    return [];
-}
+    if (!$track_post || $track_post->post_type !== 'music_track' || $track_post->post_status !== 'publish' || $track_post->post_password !== '') {
+        return [];
+    }
 
     // Audio
     $audio = get_field('track_audio', $track_id);

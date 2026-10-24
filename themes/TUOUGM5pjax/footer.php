@@ -1,10 +1,6 @@
 <?php 
-$loc = $_GET['loc'] ?? '';
-if($loc){
-   $locale = 'en_US';
-}else{
-   $locale = get_locale();
-}
+$loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['loc'] ) : '';
+$locale = 'en_US' === $loc ? 'en_US' : get_locale();
 ?>
 <footer class="ft">
 <div class="inner_1200 ft_info">

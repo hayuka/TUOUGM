@@ -146,7 +146,8 @@ btn
 	max-width: 300px;
 	margin: 0 auto 0;
 }
-.btn a{
+.btn a,
+.btn button{
 	padding: 0 14px;
 	color: #fff;
 	background: #000;
@@ -161,7 +162,12 @@ btn
 	justify-content: center;
 	height: 60px;
 }
-.btn a::after{
+.btn button{
+	font: inherit;
+	cursor: pointer;
+}
+.btn a::after,
+.btn button::after{
 	position: absolute;
 	content: '';
 	display: block;
@@ -174,8 +180,13 @@ btn
 	bottom: 0;
 	right: 16px;
 }
-.btn a:hover{
+.btn a:hover,
+.btn button:hover{
 	opacity: .7;
+}
+.btn button:focus-visible{
+	outline: 2px solid #e43a2b;
+	outline-offset: 3px;
 }
 
 .main_wrap{

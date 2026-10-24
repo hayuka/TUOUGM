@@ -938,9 +938,12 @@ function tuougm_player_catalog() {
     $query = new WP_Query([
         'post_type'      => 'music_album',
         'post_status'    => 'publish',
+        'has_password'   => false,
         'posts_per_page' => -1,
-        'orderby'        => 'menu_order',
-        'order'          => 'ASC',
+        'orderby'        => [
+            'menu_order' => 'ASC',
+            'ID'         => 'DESC',
+        ],
     ]);
 
     if ($query->have_posts()) {
