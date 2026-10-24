@@ -56,7 +56,7 @@ get_header();
 					$description = function_exists( 'get_field' ) ? (string) get_field( $description_field, (int) $album['id'] ) : '';
 					$album_tracks = $album['tracks'];
 					?>
-					<section class="music_album flex_wrap" aria-labelledby="music-album-<?php echo esc_attr( $album['id'] ); ?>">
+					<section id="album-<?php echo esc_attr( $album['id'] ); ?>" class="music_album flex_wrap" aria-labelledby="music-album-<?php echo esc_attr( $album['id'] ); ?>">
 						<figure class="music_album_artwork">
 							<?php if ( $album['artwork'] ) : ?>
 								<img src="<?php echo esc_url( $album['artwork'] ); ?>" alt="<?php echo esc_attr( $album_title ); ?>">
