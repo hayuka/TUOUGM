@@ -114,6 +114,7 @@ wp_head();
 <nav class="gnav flex_wrap">
 <ul class="flex_wrap">
 <li><a href="<?php echo get_bloginfo('url'); ?>/about/">ABOUT</a></li>
+<li><a href="<?php echo esc_url( home_url( '/music/' ) ); ?>">MUSIC</a></li>
 <?php if ( is_home() || is_front_page() ) : ?>
 <!--<li><a href="#anc04">GOODS</a></li>-->
 <!--<li><a href="#anc03">MUSIC</a></li>-->
