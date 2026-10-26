@@ -58,7 +58,7 @@
     host.innerHTML = '<div class="music_track_modal_shell"><div class="music_track_modal_status" role="status" aria-live="polite"></div>' +
       '<div class="music_track_modal_content music_track_page" aria-busy="false"></div>' +
       '<nav class="music_track_modal_nav"><button type="button" data-track-prev></button><button type="button" data-track-next></button></nav>' +
-      '<a class="music_track_modal_page" data-no-swup target="_blank" rel="noopener"></a></div>';
+      '<a class="music_track_modal_page"></a></div>';
     controller = document.createElement('button');
     controller.type = 'button';
     controller.hidden = true;
@@ -102,7 +102,7 @@
     next.textContent = 'NEXT' + (following ? ' — ' + following.title : '');
     shell.querySelector('nav').setAttribute('aria-label', label('同じアルバムの曲', 'Tracks in this album'));
     pageLink.href = tracks[index].url;
-    pageLink.textContent = label('曲のページを開く（新しいタブ）', 'Open track page (new tab)');
+    pageLink.textContent = label('曲詳細を見る', 'View track details');
   }
 
   async function load(target) {
@@ -117,6 +117,7 @@
     const dialog = shell.closest('[role="dialog"]');
     dialog.removeAttribute('aria-labelledby');
     if (busy) focus(dialog);
+    status.classList.remove('is-announcement');
     status.textContent = label('読み込み中…', 'Loading…');
     const abort = new AbortController();
     request = abort;
@@ -140,12 +141,14 @@
       const heading = content.querySelector('#music-modal-track-title');
       heading.tabIndex = -1;
       dialog.setAttribute('aria-labelledby', heading.id);
+      status.classList.add('is-announcement');
       status.textContent = label('表示中：', 'Showing: ') + data.title;
       const wrapper = shell.closest('.modaal-wrapper');
       wrapper.scrollTop = 0;
       focus(heading);
     } catch (error) {
       if (serial !== generation || !active || closing || error.name === 'AbortError' && !timedOut) return;
+      status.classList.remove('is-announcement');
       status.textContent = label('曲の詳細を読み込めませんでした。再試行するか、曲のページを開いてください。', 'Could not load track details. Retry or open the track page.');
       const retry = document.createElement('button');
       retry.type = 'button';

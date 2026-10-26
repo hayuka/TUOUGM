@@ -23,6 +23,13 @@ const markup = albums.map(album=>'<section class="music_album" data-detail-album
    if(delay) await new Promise(r=>setTimeout(r,delay));
    try { await route.fulfill({status:captured==='failure'?500:200,contentType:'application/json',body:JSON.stringify(captured==='failure'?{message:'fixture failure'}:item)}); } catch {}
   });
+  await page.route('**/en/tracks/**',async route=>{
+   const item=fixtures.find(f=>new URL(f.url).pathname===new URL(route.request().url()).pathname);
+   if(!item) return route.continue();
+   const response=await route.fetch({url:base+'/archives/'});
+   const html=(await response.text()).replace(/<main\b[\s\S]*?<\/main>/,'<main id="swup" class="music_track_page">'+item.html+'</main>');
+   await route.fulfill({response,body:html});
+  });
   if(disabled) await page.route('**/js/music-track-modal.js*',route=>route.fulfill({contentType:'application/javascript',body:'/* deliberately uninitialized */'}));
  }
  const page=await browser.newPage({viewport:{width:1440,height:900}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await setup(page);
@@ -31,6 +38,9 @@ const markup = albums.map(album=>'<section class="music_album" data-detail-album
  await first.scrollIntoViewIfNeeded();
  const saved=await page.evaluate(()=>{window.testPlayer=document.querySelector('.player');return {scroll:scrollY,url:location.href,title:document.title,canonical:document.querySelector('link[rel="canonical"]').href};});
  await first.click();await page.waitForSelector('#music-modal-track-title');
+ assert.equal(await page.locator('.music_track_modal_status').evaluate(e=>e.classList.contains('is-announcement')),true);
+ assert.equal(await page.locator('.music_track_modal_page').innerText(),'View track details');
+ assert.equal(await page.locator('.music_track_modal_page').getAttribute('target'),null);
  assert.equal(await page.locator('[data-track-prev]').isDisabled(),true);
  assert.match(await page.locator('[data-track-next]').innerText(),/First/);
  assert.equal(await page.evaluate(()=>document.querySelector('.player')===window.testPlayer),true);
@@ -49,6 +59,7 @@ const markup = albums.map(album=>'<section class="music_album" data-detail-album
  // Failure leaves a real standalone link and supports retry.
  mode='failure';await first.click();await page.waitForFunction(()=>document.querySelector('.music_track_modal_content button')?.textContent==='Retry');
  assert.equal(await page.locator('.music_track_modal_page').getAttribute('href'),fixtures[0].url);
+ assert.equal(await page.locator('.music_track_modal_status').evaluate(e=>e.classList.contains('is-announcement')),false);
  mode='success';await page.locator('.music_track_modal_content>button').click();await page.waitForSelector('#music-modal-track-title');
  await page.keyboard.press('Escape');await page.waitForSelector('.music-track-modal',{state:'detached'});
  console.log('PASS request failure and retry');
@@ -85,6 +96,16 @@ const markup = albums.map(album=>'<section class="music_album" data-detail-album
  await page.keyboard.press('Escape');await page.waitForSelector('.music-track-modal',{state:'detached'});
  await page.screenshot({path:'/tmp/tuougm-modal-mobile-closed.png'});
  console.log('PASS mobile fullscreen');
+ await page.evaluate(()=>{document.documentElement.lang='ja';window.linkPlayer=document.querySelector('.player');window.linkDocument=document;});
+ await page.locator('.music_track_title').first().click();await page.waitForSelector('#music-modal-track-title');
+ assert.equal(await page.locator('.music_track_modal_page').innerText(),'曲詳細を見る');
+ await page.locator('.music_track_modal_page').click();await page.waitForFunction(()=>location.pathname.includes('/tracks/'));
+ await page.waitForSelector('.music-track-modal',{state:'detached'});
+ assert.equal(page.context().pages().length,1);
+ assert.equal(await page.evaluate(()=>document===window.linkDocument&&document.querySelector('.player')===window.linkPlayer),true);
+ assert.equal(await page.evaluate(()=>document.querySelector('#swup').inert||document.body.classList.contains('modaal-noscroll')),false);
+ assert.equal(page.url(),fixtures[0].url);
+ console.log('PASS Japanese/English labels, same-tab detail link, modal cleanup and persistent player');
  assert.deepEqual(errors,[]);
  const fallback=await browser.newPage();await setup(fallback,true);await fallback.goto(base+'/en/music/',{waitUntil:'networkidle'});
  assert.equal(await fallback.locator('.music_track_title[data-no-swup]').count(),0);

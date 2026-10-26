@@ -3,6 +3,7 @@
 .music-track-modal .modaal-content-container{padding:40px;}
 .music-track-modal .music_track_top{padding-top:0;}
 .music-track-modal .music_track_modal_status{margin-bottom:20px;}
+.music-track-modal .music_track_modal_status.is-announcement{position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
 .music-track-modal .music_track_modal_status:empty{display:none;}
 .music-track-modal .music_track_modal_nav{display:flex;justify-content:space-between;gap:20px;margin:24px 0;}
 .music-track-modal .music_track_modal_nav button{flex:1;min-width:0;text-align:left;overflow-wrap:anywhere;}
