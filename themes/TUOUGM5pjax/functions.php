@@ -982,6 +982,7 @@ function tuougm_save_user_levels($user_id){
  * TUOUGM MUSIC DATA
  *---------------------------------------------*/
 require_once get_template_directory() . '/inc/music-data.php';
+require_once get_template_directory() . '/inc/music-track-detail.php';
 
 
 /*---------------------------------------------
@@ -1077,5 +1078,10 @@ function tuougm_enqueue_frontend_assets() {
     wp_enqueue_script( 'tuougm-player', $uri . '/js/audio(5)-track-trigger.js', array( 'jquery', 'tuougm-accordion' ), $version( '/js/audio(5)-track-trigger.js' ), true );
     wp_add_inline_script( 'tuougm-player', 'window.tuougmPlayerConfig = ' . wp_json_encode( array( 'restNonce' => wp_create_nonce( 'wp_rest' ) ) ) . ';', 'before' );
     wp_enqueue_script( 'tuougm-lyrics', $uri . '/js/lyric.js', array( 'jquery', 'tuougm-player' ), $version( '/js/lyric.js' ), true );
+    wp_enqueue_style( 'tuougm-track-modal', $uri . '/css/music-track-modal.css', array( 'tuougm-style' ), $version( '/css/music-track-modal.css' ) );
+    wp_enqueue_script( 'tuougm-track-modal', $uri . '/js/music-track-modal.js', array( 'jquery', 'tuougm-modaal', 'tuougm-pjax' ), $version( '/js/music-track-modal.js' ), true );
+    wp_add_inline_script( 'tuougm-track-modal', 'window.tuougmTrackModalConfig = ' . wp_json_encode( array(
+        'endpoint' => rest_url( 'tuougm/v1/track-detail' ), 'nonce' => wp_create_nonce( 'wp_rest' ),
+    ) ) . ';', 'before' );
 }
 add_action( 'wp_enqueue_scripts', 'tuougm_enqueue_frontend_assets' );
