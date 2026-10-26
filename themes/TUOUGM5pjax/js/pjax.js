@@ -56,6 +56,9 @@
 			if (typeof window.tuougmInitPage === 'function') {
 				window.tuougmInitPage();
 			}
+			if (typeof window.tuougmUpdateMusicTrackState === 'function') {
+				window.tuougmUpdateMusicTrackState();
+			}
 			window.requestAnimationFrame(function() {
 				scrollToCurrentHash(url);
 			});

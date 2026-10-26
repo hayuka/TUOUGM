@@ -38,6 +38,26 @@
     return globalCurrentPlaylist[globalCurrentIndex] || null;
   }
 
+  function updateMusicTrackState() {
+    const track = getCurrentTrack();
+    const audio = globalCurrentAudio;
+    const hasLoadedCurrentTrack = !!(
+      track && audio && String(audio.dataset.trackId || '') === String(track.id)
+    );
+    const hasPlaybackError = !!(audio && audio.error);
+
+    $('.music_track_item').each(function() {
+      const itemTrackId = String($(this).find('[data-player-track]').first().attr('data-player-track') || '');
+      const isCurrentTrack = hasLoadedCurrentTrack && itemTrackId === String(track.id);
+
+      $(this)
+        .toggleClass('is-playing', isCurrentTrack && !audio.paused && !hasPlaybackError)
+        .toggleClass('is-paused', isCurrentTrack && audio.paused && !hasPlaybackError);
+    });
+  }
+
+  window.tuougmUpdateMusicTrackState = updateMusicTrackState;
+
   function updatePreviousButton() {
     $('.player').find('.player_send.pre').toggleClass(
       'disabled',
@@ -197,6 +217,7 @@
 	);
 
     const track = getCurrentTrack();
+    updateMusicTrackState();
     if (!track || !globalCurrentAlbum) {
       $('.player').find('.player_title span').text('No track selected');
       $('.player').find('.player_album_toggle_label').text('Select album');
