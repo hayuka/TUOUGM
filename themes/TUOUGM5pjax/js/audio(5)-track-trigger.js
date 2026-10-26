@@ -45,14 +45,22 @@
       track && audio && String(audio.dataset.trackId || '') === String(track.id)
     );
     const hasPlaybackError = !!(audio && audio.error);
+    const isEnglish = /^en(?:-|$)/i.test(document.documentElement.lang || '');
 
     $('.music_track_item').each(function() {
-      const itemTrackId = String($(this).find('[data-player-track]').first().attr('data-player-track') || '');
+      const $item = $(this);
+      const itemTrackId = String($item.find('[data-player-track]').first().attr('data-player-track') || '');
+      const trackTitle = $item.find('.music_track_title').text().trim();
       const isCurrentTrack = hasLoadedCurrentTrack && itemTrackId === String(track.id);
+      const isPlaying = isCurrentTrack && !audio.paused && !hasPlaybackError;
 
-      $(this)
-        .toggleClass('is-playing', isCurrentTrack && !audio.paused && !hasPlaybackError)
-        .toggleClass('is-paused', isCurrentTrack && audio.paused && !hasPlaybackError);
+      $item
+        .toggleClass('is-playing', isPlaying)
+        .toggleClass('is-paused', isCurrentTrack && audio.paused && !hasPlaybackError)
+        .find('.music_track_play')
+        .attr('aria-label', isEnglish
+          ? (isPlaying ? 'Pause ' : 'Play ') + trackTitle
+          : '「' + trackTitle + '」を' + (isPlaying ? '一時停止' : '再生'));
     });
   }
 
