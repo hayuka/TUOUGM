@@ -36,11 +36,9 @@ if ('en_US' == $locale){
 <?php 
 if ('en_US' == $locale){
 if ( is_home() || is_front_page() ){
-	$canonical = (empty($_SERVER["HTTPS"]) ? "http://" : "https://") . $_SERVER["HTTP_HOST"] ;
 	$ttl_og = "The Ultimate Sin of Unbuilt Gunpla | TUOUGM";
 	$disc_og = "Unbuilt Gunpla still has a voice.";
 }else{
-	$canonical = (empty($_SERVER["HTTPS"]) ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
 }
 if ( is_front_page() ) {
   $desc = "Japanese industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
@@ -61,11 +59,9 @@ if ( is_front_page() ) {
 }
 } else {
 if ( is_home() || is_front_page() ){
-	$canonical = (empty($_SERVER["HTTPS"]) ? "http://" : "https://") . $_SERVER["HTTP_HOST"] ;
 	$ttl_og = "罪プラの逆襲、開幕｜TUOUGM";
 	$disc_og = "ガンプラ×メタルの衝動。未組みの罪を鳴らせ。";
 }else{
-	$canonical = (empty($_SERVER["HTTPS"]) ? "http://" : "https://") . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
 }
 if ( is_front_page() ) {
   $desc = "ガンプラ（Gunpla）をテーマにしたインダストリアルメタル音楽プロジェクトTUOUGM。重厚なサウンドと機械的グルーヴで模型の作り込みを音で表現。";
@@ -87,6 +83,25 @@ if ( is_front_page() ) {
 }
 // 改行除去（地味に重要）
 $desc = str_replace(array("\r\n", "\n", "\r"), '', $desc);
+$request_path = isset( $_SERVER['REQUEST_URI'] )
+	? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH )
+	: '/';
+if ( ! is_string( $request_path ) || '' === $request_path ) {
+	$request_path = '/';
+}
+$canonical = home_url( user_trailingslashit( $request_path ) );
+if ( ! in_array( untrailingslashit( $request_path ), array( '', '/en' ), true ) && ! is_singular( 'music_track' ) ) {
+	$page_title = wp_title( '｜', false, 'right' );
+	$site_title = 'en_US' === $locale ? 'The Ultimate Sin of Unbuilt Gunpla | TUOUGM' : get_bloginfo( 'name' );
+	$ttl_og = trim( $page_title ) . ' ' . $site_title;
+	$disc_og = $desc;
+}
+if ( ! isset( $ttl_og ) || '' === trim( (string) $ttl_og ) ) {
+	$ttl_og = wp_get_document_title();
+}
+if ( ! isset( $disc_og ) || '' === trim( (string) $disc_og ) ) {
+	$disc_og = $desc;
+}
 if ( is_singular('post') && has_post_thumbnail() ) {
   $ogp_img = get_the_post_thumbnail_url(get_the_ID(), 'full');
 } else {
@@ -95,7 +110,7 @@ if ( is_singular('post') && has_post_thumbnail() ) {
 }
 ?>
 
-<link rel="canonical" href="<?php echo $canonical; ?>">
+<link rel="canonical" href="<?php echo esc_url( $canonical ); ?>">
 <?php if ( is_singular( 'music_track' ) ) { ?>
 <title><?php echo esc_html( $ttl_og ); ?></title>
 <?php } elseif ('en_US' == $locale){ ?>
@@ -126,6 +141,7 @@ if ( is_singular('post') && has_post_thumbnail() ) {
 
 <script src="https://kit.fontawesome.com/042c9c691e.js" crossorigin="anonymous"></script>
 <?php
+remove_action( 'wp_head', 'rel_canonical' );
 wp_head();
 ?>
 </head>

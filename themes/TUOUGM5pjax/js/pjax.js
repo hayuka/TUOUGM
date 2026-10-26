@@ -45,9 +45,33 @@
 		}
 
 		updatePersistentUI();
+		var swupPlugins = [];
+
+		if (typeof SwupHeadPlugin === 'function') {
+			swupPlugins.push(new SwupHeadPlugin({
+				attributes: ['lang', 'dir'],
+				persistTags: function(tag) {
+					if (tag.tagName === 'SCRIPT') {
+						var scriptType = (tag.getAttribute('type') || '').split(';')[0].trim().toLowerCase();
+						return scriptType !== 'application/ld+json';
+					}
+					if (tag.tagName === 'STYLE') {
+						return true;
+					}
+					return tag.tagName === 'LINK' && [
+						'stylesheet', 'preload', 'modulepreload', 'preconnect', 'dns-prefetch'
+					].some(function(rel) {
+						return tag.relList.contains(rel);
+					});
+				}
+			}));
+		} else {
+			console.error('[TUOUGM] Swup Head Plugin is unavailable.');
+		}
 
 		var swup = new Swup({
-			containers: ['#swup-header', '#swup']
+			containers: ['#swup-header', '#swup'],
+			plugins: swupPlugins
 		});
 
 		swup.hooks.on('page:view', function(visit) {

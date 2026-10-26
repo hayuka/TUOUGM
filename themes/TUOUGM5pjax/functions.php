@@ -1070,7 +1070,8 @@ function tuougm_enqueue_frontend_assets() {
     wp_enqueue_script( 'jquery' );
     wp_enqueue_script( 'tuougm-modaal', $uri . '/vendor/modaal/0.4.4/modaal.min.js', array( 'jquery' ), '0.4.4', true );
     wp_enqueue_script( 'tuougm-swup', $uri . '/vendor/swup/4.10.0/Swup.umd.js', array(), '4.10.0', true );
-    wp_enqueue_script( 'tuougm-pjax', $uri . '/js/pjax.js', array( 'jquery', 'tuougm-swup' ), $version( '/js/pjax.js' ), true );
+    wp_enqueue_script( 'tuougm-swup-head', 'https://unpkg.com/@swup/head-plugin@2.3.1', array( 'tuougm-swup' ), '2.3.1', true );
+    wp_enqueue_script( 'tuougm-pjax', $uri . '/js/pjax.js', array( 'jquery', 'tuougm-swup-head' ), $version( '/js/pjax.js' ), true );
     wp_enqueue_script( 'tuougm-common', $uri . '/js/common.js', array( 'jquery', 'tuougm-modaal', 'tuougm-pjax' ), $version( '/js/common.js' ), true );
     wp_enqueue_script( 'tuougm-accordion', $uri . '/js/accordion.js', array( 'jquery', 'tuougm-common' ), $version( '/js/accordion.js' ), true );
     wp_enqueue_script( 'tuougm-player', $uri . '/js/audio(5)-track-trigger.js', array( 'jquery', 'tuougm-accordion' ), $version( '/js/audio(5)-track-trigger.js' ), true );
