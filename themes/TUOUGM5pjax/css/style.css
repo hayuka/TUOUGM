@@ -432,6 +432,7 @@ btn
 .music_album_type{
 	font-size: 14px;
 	letter-spacing: .12em;
+	line-height: 1;
 }
 .music_album_title{
 	font-size: clamp(28px, 3.5vw, 48px);
