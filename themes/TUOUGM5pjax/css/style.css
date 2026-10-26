@@ -497,6 +497,7 @@ btn
 	line-height: 1;
 }
 .music_track_play:hover{color:#e43a2b;border-color:#e43a2b;}
+.music_track_item .music_track_play:hover{opacity:1;}
 .music_track_item.is-playing .music_track_play{
 	border-color:#e43a2b;
 	background:#e43a2b;
