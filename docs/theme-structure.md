@@ -79,7 +79,7 @@ TUOUGM5pjax/
 
 ## 5. JSの全ファイルと読み込み順
 
-`functions.php:1060–1081`で依存関係を登録し、`wp_footer()`から **jQuery → Modaal → Swup 4.10.0 → Swup Head Plugin 2.3.1 → pjax.js → common.js → accordion.js → nonce設定 → audio(5)-track-trigger.js → lyric.js** の順に出力する。Head PluginはSwupの`content:replace`前に遷移先の`<head>`と`<html lang/dir>`を同期する。ページSEOメタ・canonical・hreflang・JSON-LDは更新し、script/style/stylesheet/preload等の共有アセットは`persistTags`で維持する。Swup標準のtitle更新は有効のまま。
+`functions.php:1060–1081`で依存関係を登録し、`wp_footer()`から **jQuery → Modaal → Swup 4.10.0 → テーマ内のSwup Head Plugin 2.3.1（`vendor/swup/2.3.1/SwupHeadPlugin.umd.js`）→ pjax.js → common.js → accordion.js → nonce設定 → audio(5)-track-trigger.js → lyric.js** の順に出力する。Head PluginはSwupの`content:replace`前に遷移先の`<head>`と`<html lang/dir>`を同期する。ページSEOメタ・canonical・hreflang・JSON-LDは更新し、script/style/stylesheet/preload等の共有アセットは`persistTags`で維持する。Head Pluginは外部CDNを使わず、Swup標準のtitle更新は有効のまま。
 
 | ファイル | 現テーマでの明示読込 | 責務 |
 | --- | --- | --- |
