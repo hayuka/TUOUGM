@@ -1,3 +1,4 @@
+(function ($) {
 /* ------------------------------------------------------------------
 
  accordion.js
@@ -40,3 +41,5 @@ $(function() {
 		$options.stop(true, true).slideUp(200);
 	});
 });
+
+})(jQuery);

@@ -123,9 +123,6 @@ if ( is_singular('post') && has_post_thumbnail() ) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Saira:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/Modaal/0.4.4/css/modaal.min.css" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="<?php echo get_template_directory_uri(); ?>/css/module.css">
-<link rel="stylesheet" href="<?php echo get_template_directory_uri(); ?>/css/style.css">
 
 <script src="https://kit.fontawesome.com/042c9c691e.js" crossorigin="anonymous"></script>
 <?php

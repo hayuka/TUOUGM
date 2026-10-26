@@ -1054,3 +1054,27 @@ add_action('rest_api_init', function() {
     ]);
 });
 require_once get_template_directory() . '/inc/tuougm-track-inserter.php';
+
+/** Load frontend assets through WordPress dependency management. */
+function tuougm_enqueue_frontend_assets() {
+    $uri = get_template_directory_uri();
+    $dir = get_template_directory();
+    $version = static function ( $path ) use ( $dir ) {
+        return (string) filemtime( $dir . $path );
+    };
+
+    wp_enqueue_style( 'tuougm-modaal', $uri . '/vendor/modaal/0.4.4/modaal.min.css', array(), '0.4.4' );
+    wp_enqueue_style( 'tuougm-module', $uri . '/css/module.css', array( 'tuougm-modaal' ), $version( '/css/module.css' ) );
+    wp_enqueue_style( 'tuougm-style', $uri . '/css/style.css', array( 'tuougm-module' ), $version( '/css/style.css' ) );
+
+    wp_enqueue_script( 'jquery' );
+    wp_enqueue_script( 'tuougm-modaal', $uri . '/vendor/modaal/0.4.4/modaal.min.js', array( 'jquery' ), '0.4.4', true );
+    wp_enqueue_script( 'tuougm-swup', $uri . '/vendor/swup/4.10.0/Swup.umd.js', array(), '4.10.0', true );
+    wp_enqueue_script( 'tuougm-pjax', $uri . '/js/pjax.js', array( 'jquery', 'tuougm-swup' ), $version( '/js/pjax.js' ), true );
+    wp_enqueue_script( 'tuougm-common', $uri . '/js/common.js', array( 'jquery', 'tuougm-modaal', 'tuougm-pjax' ), $version( '/js/common.js' ), true );
+    wp_enqueue_script( 'tuougm-accordion', $uri . '/js/accordion.js', array( 'jquery', 'tuougm-common' ), $version( '/js/accordion.js' ), true );
+    wp_enqueue_script( 'tuougm-player', $uri . '/js/audio(5)-track-trigger.js', array( 'jquery', 'tuougm-accordion' ), $version( '/js/audio(5)-track-trigger.js' ), true );
+    wp_add_inline_script( 'tuougm-player', 'window.tuougmPlayerConfig = ' . wp_json_encode( array( 'restNonce' => wp_create_nonce( 'wp_rest' ) ) ) . ';', 'before' );
+    wp_enqueue_script( 'tuougm-lyrics', $uri . '/js/lyric.js', array( 'jquery', 'tuougm-player' ), $version( '/js/lyric.js' ), true );
+}
+add_action( 'wp_enqueue_scripts', 'tuougm_enqueue_frontend_assets' );

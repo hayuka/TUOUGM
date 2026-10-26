@@ -1,3 +1,4 @@
+(function ($) {
 /* ------------------------------------------------------------------
 
  common.js
@@ -385,3 +386,4 @@ $(window).resize(function(){
 //	getMemTop();
 //	setModalHeight();
 });
+})(jQuery);
