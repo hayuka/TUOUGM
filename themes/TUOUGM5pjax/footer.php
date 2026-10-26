@@ -110,19 +110,6 @@ Sharing and feedback are always welcome.</p>
 </div>
 </div><!--/player-->
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Modaal/0.4.4/js/modaal.min.js"></script>
-<script src="https://unpkg.com/swup@4"></script>
-<script src="<?php echo get_template_directory_uri(); ?>/js/pjax.js"></script>
-<script src="<?php echo get_template_directory_uri(); ?>/js/common.js"></script>
-<script src="<?php echo get_template_directory_uri(); ?>/js/accordion.js"></script>
-<script>
-window.tuougmPlayerConfig = {
-    restNonce: <?php echo wp_json_encode(wp_create_nonce('wp_rest')); ?>
-};
-</script>
-<script src="<?php echo get_template_directory_uri(); ?>/js/audio(5)-track-trigger.js"></script>
-<script src="<?php echo get_template_directory_uri(); ?>/js/lyric.js"></script>
-</body>
 <?php wp_footer(); ?>
+</body>
 </html>
