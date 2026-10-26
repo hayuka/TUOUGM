@@ -56,7 +56,7 @@ get_header();
 					$description = function_exists( 'get_field' ) ? (string) get_field( $description_field, (int) $album['id'] ) : '';
 					$album_tracks = $album['tracks'];
 					?>
-					<section id="album-<?php echo esc_attr( $album['id'] ); ?>" class="music_album flex_wrap" aria-labelledby="music-album-<?php echo esc_attr( $album['id'] ); ?>">
+					<section data-detail-album="<?php echo esc_attr( $album['id'] ); ?>" id="album-<?php echo esc_attr( $album['id'] ); ?>" class="music_album flex_wrap" aria-labelledby="music-album-<?php echo esc_attr( $album['id'] ); ?>">
 						<figure class="music_album_artwork">
 							<?php if ( $album['artwork'] ) : ?>
 								<img src="<?php echo esc_url( $album['artwork'] ); ?>" alt="<?php echo esc_attr( $album_title ); ?>">
@@ -74,7 +74,7 @@ get_header();
 										<?php $track_title = $is_english && ! empty( $track['title_en'] ) ? $track['title_en'] : $track['title']; ?>
 										<li class="music_track_item">
 											<?php $track_url = tuougm_get_track_language_url( (int) $track['id'], $is_english ? 'en_US' : 'ja' ); ?>
-											<a class="music_track_title" href="<?php echo esc_url( $track_url ); ?>"><?php echo esc_html( $track_title ); ?></a>
+											<a class="music_track_title" data-detail-track="<?php echo esc_attr( $track['id'] ); ?>" href="<?php echo esc_url( $track_url ); ?>"><?php echo esc_html( $track_title ); ?></a>
 											<button type="button" class="tuougm-track-trigger music_track_play" data-player-track="<?php echo esc_attr( $track['id'] ); ?>" aria-label="<?php echo esc_attr( sprintf( $is_english ? 'Play %s' : '「%s」を再生', $track_title ) ); ?>"><span aria-hidden="true">▶</span></button>
 										</li>
 									<?php endforeach; ?>
