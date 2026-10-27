@@ -91,7 +91,7 @@ if ( $latest_album ) :
 ?>
 <section class="sec_info def_sec sec_latest_release">
 <div class="inner_1200">
-<h2 class="ttl_sec_info"><span>LATEST RELEASE</span><a class="latest_release_view_all" href="<?php echo esc_url( function_exists( 'bogo_url' ) ? bogo_url( home_url( '/music/' ), $is_release_english ? 'en_US' : 'ja' ) : home_url( '/music/' ) ); ?>">VIEW ALL MUSIC <span aria-hidden="true">↗</span></a></h2>
+<h2 class="ttl_sec_info"><span>LATEST RELEASE</span><a class="latest_release_view_all" href="<?php echo esc_url( function_exists( 'bogo_url' ) ? bogo_url( home_url( '/music/' ), $is_release_english ? 'en_US' : 'ja' ) : home_url( '/music/' ) ); ?>">VIEW ALL <span class="latest_release_view_all_music">MUSIC</span></a></h2>
 <p class="sub_ttl_info"><?php echo $is_release_english ? 'Updating with the latest releases' : '最新のリリース'; ?></p>
 <div class="wrap_release flex_wrap">
 <figure><?php if ( $latest_album['artwork'] ) : ?><img src="<?php echo esc_url( $latest_album['artwork'] ); ?>" alt="<?php echo esc_attr( $release_title ); ?>"><?php endif; ?></figure>
