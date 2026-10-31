@@ -1037,6 +1037,7 @@ add_action('rest_api_init', function() {
         'permission_callback' => '__return_true',
         'callback' => function() {
             $level = tuougm_player_access_level();
+            // Archive classification is display-only; authorize both album types here.
             $albums = array_values(array_filter(
                 tuougm_player_catalog(),
                 function($album) use ($level) {

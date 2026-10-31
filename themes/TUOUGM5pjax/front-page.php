@@ -61,15 +61,25 @@ if ( function_exists( 'get_field' ) ) {
         'no_found_rows'  => true,
         'orderby'       => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
         'meta_query'    => array(
-            'relation' => 'OR',
-            array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
-            array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+            'relation' => 'AND',
+            array(
+                'relation' => 'OR',
+                array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
+                array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+            ),
+            array(
+                // ACF True/False: form saves '0'/'1'; false via update_field() may save ''.
+                'relation' => 'OR',
+                array( 'key' => 'archive_only', 'compare' => 'NOT EXISTS' ),
+                array( 'key' => 'archive_only', 'value' => array( '0', '' ), 'compare' => 'IN' ),
+            ),
         ),
     ) );
-    if ( ! empty( $release_query->posts ) ) {
-        $latest_album = tuougm_get_album_data( $release_query->posts[0]->ID );
-        if ( ! empty( $latest_album ) && $latest_album['required_level'] > 0 ) {
-            $latest_album = array();
+    foreach ( $release_query->posts as $release_post ) {
+        $candidate = tuougm_get_album_data( $release_post->ID );
+        if ( ! empty( $candidate ) && ! $candidate['archive_only'] && $candidate['required_level'] <= 0 ) {
+            $latest_album = $candidate;
+            break;
         }
     }
 }

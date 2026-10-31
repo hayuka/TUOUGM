@@ -36,7 +36,7 @@ get_header();
 				<?php while ( $music_albums->have_posts() ) : $music_albums->the_post(); ?>
 					<?php
 					$album = tuougm_get_album_data( get_the_ID() );
-					if ( empty( $album ) || (int) $album['required_level'] > $access_level ) {
+					if ( empty( $album ) || $album['archive_only'] || (int) $album['required_level'] > $access_level ) {
 						continue;
 					}
 					++$displayed_album_count;
