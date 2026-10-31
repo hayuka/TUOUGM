@@ -3733,3 +3733,7 @@ html.is-changing .transition-fade {
 .ft.is-minimal .ft_info {
 	display: none;
 }
+
+.wp-caption{
+width:100% !important;
+}
