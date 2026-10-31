@@ -57,13 +57,22 @@ if ( function_exists( 'get_field' ) ) {
         'post_type'      => 'music_album',
         'post_status'    => 'publish',
         'has_password'   => false,
-        'posts_per_page' => -1,
+        'posts_per_page' => 1,
         'no_found_rows'  => true,
         'orderby'       => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
         'meta_query'    => array(
-            'relation' => 'OR',
-            array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
-            array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+            'relation' => 'AND',
+            array(
+                'relation' => 'OR',
+                array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
+                array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+            ),
+            array(
+                // ACF True/False: form saves '0'/'1'; false via update_field() may save ''.
+                'relation' => 'OR',
+                array( 'key' => 'archive_only', 'compare' => 'NOT EXISTS' ),
+                array( 'key' => 'archive_only', 'value' => array( '0', '' ), 'compare' => 'IN' ),
+            ),
         ),
     ) );
     foreach ( $release_query->posts as $release_post ) {

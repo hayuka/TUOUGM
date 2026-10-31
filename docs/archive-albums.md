@@ -28,7 +28,7 @@
 
 Media Sessionは現在アルバムのartist_nameを使用し、古いAPI等で欠けても従来名へフォールバック。GA4の`music_play`、パラメーター、playingイベントからの送信・重複抑止は変更なし。PJAX、歌詞、曲挿入ショートコード・管理用検索も変更なし。曲IDが複数アルバムに属する場合、記事内ボタンは従来どおりカタログで最初に見つかった所属を使う。
 
-LATEST RELEASEは従来の公開条件・並び順を維持し、先頭がアーカイブでも後続の通常候補を探す。既存の独立した曲詳細URL・モーダルはarchive_onlyを理由に制限しない。
+LATEST RELEASEは従来の公開条件・並び順を維持する。`archive_only`が未設定（NOT EXISTS）または`'0'`／空文字の通常作品をmeta_queryで絞り、既存required_level条件とANDで結合して1件だけ取得する。PHP側の分類・権限再確認も残す。既存の独立した曲詳細URL・モーダルはarchive_onlyを理由に制限しない。
 
 ## 変更ファイル
 
@@ -75,3 +75,13 @@ NodeテストはPlaywrightとChromiumが必要。`TUOUGM_BASE_URL`、`CHROMIUM_P
 ## 未検証・制約
 
 本番ACF設定・DBは未変更。LOST FIGHTS等の本番音源、実HTTP認証による会員別再生、OSロック画面・実機Media Session操作、Safari/iOS、GA4サーバーでの受信、すべてのプラグイン組み合わせは未検証。模擬Audioの検証と実Audioの検証は上記のとおり区別する。クラウドのFont Awesome/Google Fonts等の既知の外部通信制限は本変更の対象外。
+
+## PRレビュー対応: LATEST RELEASEの取得件数
+
+ACF True/Falseのフォーム値はチェック時1・未チェック時0。実際の開発DBで`update_field(true)`は`'1'`、`update_field(false)`は空文字として保存され、文字列`'0'`もfalseとして取得されることを確認した。古いアルバムはメタ行なしでもfalseとして扱う。この3つのfalse状態をクエリ条件に含める。`NUMERIC != 1`等の広い数値変換は使わない。
+
+`required_level`の未設定または数値0以下という既存条件、公開・パスワードなし、`menu_order ASC / ID DESC`は維持。クエリは`posts_per_page=1`と`no_found_rows=true`を使用し、アーカイブを取得した後に除外する方式ではない。
+
+追加テストで実保存値・未設定・両false表現・権限不足の先行候補・menu_order・同順位でのID降順と、実際のSQLの`LIMIT 0, 1`を確認した。テストデータはROLLBACKし、既存のPHP・模擬Audio・実Audio・モーダルテストを再実行。
+
+取得・展開するアルバムと曲データは1作品分に抑えられる。ただしpostmetaのOR条件と並び替えをDBが評価するため、DB内部の走査量まで一定になるわけではない。本番データでの実行計画・負荷測定は未実施。通常のACF単一値保存を対象とし、独自フィルターや不正な重複メタ等は想定外。設定・DB構造・インデックスの変更は行っていない。

@@ -27,6 +27,10 @@ try {
  update_field('field_archive_test_flag',false,$normal);update_field('field_archive_test_artist','  LOST FIGHTS  ',$archive);
  update_field('field_archive_test_artist','   ',$normal);update_post_meta($restricted,'required_level',2);
  $a=tuougm_get_album_data($archive);$n=tuougm_get_album_data($normal);$l=tuougm_get_album_data($legacy);
+ archive_check(get_post_meta($archive,'archive_only',true)==='1','ACF true stored as 1');
+ archive_check(in_array(get_post_meta($normal,'archive_only',true),array('0',''),true),'ACF false stored as 0 or empty string');
+ archive_check(!metadata_exists('post',$legacy,'archive_only'),'legacy album has no archive meta row');
+ echo 'INFO update_field(false) stored as '.wp_json_encode(get_post_meta($normal,'archive_only',true))."\n";
  archive_check($a['archive_only']===true&&$n['archive_only']===false&&$l['archive_only']===false,'true/false/unset JSON boolean contract');
  archive_check(strpos(wp_json_encode($a),'"archive_only":true')!==false,'JSON boolean is not string');
  archive_check($a['artist_name']==='LOST FIGHTS','artist trimmed');
@@ -48,6 +52,41 @@ try {
  ob_start();include get_template_directory().'/front-page.php';$home=ob_get_clean();
  archive_check(preg_match('~<section class="sec_info def_sec sec_latest_release">.*?</section>~s',$home,$section)===1,'LATEST RELEASE exists');
  archive_check(strpos($section[0],'ArchiveTest Normal')!==false&&strpos($section[0],'ArchiveTest Hidden')===false,'LATEST RELEASE skips leading archive and finds normal');
+ // Exercise the real template query, not a copied approximation of its meta_query.
+ $release_result=static function(){
+  $locale='ja';ob_start();include get_template_directory().'/front-page.php';$html=ob_get_clean();
+  preg_match('~<section class="sec_info def_sec sec_latest_release">.*?</section>~s',$html,$match);
+  return array($match[0]??'',array_map('intval',wp_list_pluck($release_query->posts,'ID')),$release_query->request,$release_query->get('posts_per_page'));
+ };
+ $limited=$release_result();
+ archive_check($limited[1]===array($normal)&&$limited[3]===1&&strpos($limited[2],'LIMIT 0, 1')!==false,'query limits eligible normal candidates to one');
+ foreach(array('0','') as $false_value){
+  update_field('field_archive_test_flag',$false_value,$normal);
+  acf_flush_value_cache($normal,'archive_only');
+  archive_check(get_post_meta($normal,'archive_only',true)===$false_value&&!tuougm_get_album_data($normal)['archive_only'],'false scalar save matches formatted ACF value');
+  archive_check($release_result()[1]===array($normal),'query includes false storage '.wp_json_encode($false_value));
+ }
+ wp_update_post(array('ID'=>$legacy,'menu_order'=>-100001));
+ archive_check($release_result()[1]===array($legacy),'query includes missing archive flag and honors menu_order');
+ wp_update_post(array('ID'=>$legacy,'menu_order'=>0));
+ update_field('field_archive_test_flag',false,$restricted);
+ acf_flush_value_cache($restricted,'archive_only');
+ wp_update_post(array('ID'=>$restricted,'menu_order'=>-100002));
+ archive_check($release_result()[1]===array($normal),'required_level still excludes earlier restricted normal');
+ $tied=archive_fixture('music_album','ArchiveTest Tied',-99998);
+ update_post_meta($tied,'album_tracks',array($track));
+ archive_check($release_result()[1]===array($tied),'ID DESC breaks equal menu_order ties');
+ update_post_meta($tied,'required_level',1);
+ archive_check($release_result()[1]===array($normal),'required_level positive excludes latest tied normal');
+ update_post_meta($normal,'required_level',0);
+ archive_check($release_result()[1]===array($normal),'required_level explicit zero remains eligible');
+ foreach(array($normal,$legacy) as $id)update_post_meta($id,'required_level',1);
+ $none=$release_result();
+ archive_check($none[1]===array()&&$none[0]==='','no release when only archive or restricted candidates remain');
+ update_post_meta($normal,'required_level',0);
+ // Restore the restricted archive for the existing member/API test below.
+ update_field('field_archive_test_flag',true,$restricted);
+ acf_flush_value_cache($restricted,'archive_only');
  wp_set_current_user(1);
  $filter=static function($value,$user_id,$key){return $key==='membership_level'?array(2):$value;};add_filter('get_user_metadata',$filter,10,3);
  $response=$server->dispatch(new WP_REST_Request('GET','/tuougm/v1/player'));
