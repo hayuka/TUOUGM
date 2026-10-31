@@ -162,7 +162,7 @@
     const artworkUrl = new URL(album.artwork, location.href).href;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
-      artist: ARTIST_NAME,
+      artist: album.artist_name || ARTIST_NAME,
       album: album.title,
       artwork: [{ src: artworkUrl, sizes: '512x512', type: 'image/png' }]
     });
@@ -188,10 +188,7 @@
         return;
       }
 
-      const currentAlbumIndex = getAlbumIndex(globalCurrentAlbum && globalCurrentAlbum.id);
-      const nextAlbumIndex = currentAlbumIndex + 1;
-      const albums = playerData && playerData.albums ? playerData.albums : [];
-      const nextAlbum = albums[nextAlbumIndex] || albums[0];
+      const nextAlbum = getNextAlbum();
 
       if (nextAlbum && nextAlbum.tracks && nextAlbum.tracks.length) {
         globalIsPlayingAll = true;
@@ -292,9 +289,19 @@
     });
   }
 
-  function getAlbumIndex(albumId) {
-    if (!playerData || !playerData.albums) return -1;
-    return playerData.albums.findIndex(album => String(album.id) === String(albumId));
+  // Display/normal sequencing only. getAlbum() and article triggers retain all
+  // server-authorized albums, including archives.
+  function getNormalAlbums() {
+    return playerData && playerData.albums
+      ? playerData.albums.filter(album => !album.archive_only)
+      : [];
+  }
+
+  function getNextAlbum() {
+    if (globalCurrentAlbum && globalCurrentAlbum.archive_only) return globalCurrentAlbum;
+    const albums = getNormalAlbums();
+    const index = albums.findIndex(album => String(album.id) === String(globalCurrentAlbum && globalCurrentAlbum.id));
+    return albums[index + 1] || albums[0];
   }
 
 function handleEnded() {
@@ -314,13 +321,9 @@ function handleEnded() {
   }
 
   // 3. リピートOFFなら、次のアルバムへ移動
-  const currentAlbumIndex = getAlbumIndex(
-    globalCurrentAlbum && globalCurrentAlbum.id
-  );
-  const albums = playerData && playerData.albums
-    ? playerData.albums
-    : [];
-  const nextAlbum = albums[currentAlbumIndex + 1] || albums[0];
+  // Archives stop at the end unless repeat is enabled above. Manual Next
+  // uses getNextAlbum() and wraps within that same archive instead.
+  const nextAlbum = globalCurrentAlbum && globalCurrentAlbum.archive_only ? null : getNextAlbum();
 
   if (nextAlbum && nextAlbum.tracks && nextAlbum.tracks.length) {
     globalIsPlayingAll = true;
@@ -407,7 +410,7 @@ function handleEnded() {
 
     const track = getCurrentTrack();
     if (!track || !globalCurrentAlbum) return;
-    if (String(globalCurrentAlbum.id) !== String($player.find('.player_album_options input[type="radio"]:checked').val() || '')) return;
+    if (!globalCurrentAlbum.archive_only && String(globalCurrentAlbum.id) !== String($player.find('.player_album_options input[type="radio"]:checked').val() || '')) return;
 
     $player.find('.player_track_list li').filter(function() {
       return String($(this).data('player-track')) === String(track.id);
@@ -421,12 +424,13 @@ function handleEnded() {
 
     $wrap.empty();
 
-    if (!playerData || !playerData.albums || !playerData.albums.length) {
+    const albums = getNormalAlbums();
+    if (!albums.length) {
       $label.text('Select album');
       return;
     }
 
-    playerData.albums.forEach(function(album, index) {
+    albums.forEach(function(album, index) {
       const inputId = 'player-album-' + String(album.id).replace(/[^a-zA-Z0-9_-]/g, '-') + '-' + index;
       const $item = $('<label>', {
         'class': 'player_album_option',
@@ -592,10 +596,7 @@ function handleEnded() {
         return;
       }
 
-      const currentAlbumIndex = getAlbumIndex(globalCurrentAlbum && globalCurrentAlbum.id);
-      const nextAlbumIndex = currentAlbumIndex + 1;
-      const albums = playerData && playerData.albums ? playerData.albums : [];
-      const nextAlbum = albums[nextAlbumIndex] || albums[0];
+      const nextAlbum = getNextAlbum();
 
       if (nextAlbum && nextAlbum.tracks && nextAlbum.tracks.length) {
         globalIsPlayingAll = true;
@@ -808,8 +809,9 @@ function handleEnded() {
 
       // API取得後は1枚目のアルバム・1曲目を選択状態にする。
       // 音源はまだロードせず、再生時に読み込む。
-      if (playerData.albums && playerData.albums.length) {
-        const firstAlbum = playerData.albums[0];
+      const albums = getNormalAlbums();
+      if (albums.length) {
+        const firstAlbum = albums[0];
         if (firstAlbum.tracks && firstAlbum.tracks.length) {
           setAlbum(firstAlbum.id, 0, false);
         }

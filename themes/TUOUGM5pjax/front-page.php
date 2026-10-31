@@ -57,7 +57,7 @@ if ( function_exists( 'get_field' ) ) {
         'post_type'      => 'music_album',
         'post_status'    => 'publish',
         'has_password'   => false,
-        'posts_per_page' => 1,
+        'posts_per_page' => -1,
         'no_found_rows'  => true,
         'orderby'       => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
         'meta_query'    => array(
@@ -66,10 +66,11 @@ if ( function_exists( 'get_field' ) ) {
             array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
         ),
     ) );
-    if ( ! empty( $release_query->posts ) ) {
-        $latest_album = tuougm_get_album_data( $release_query->posts[0]->ID );
-        if ( ! empty( $latest_album ) && $latest_album['required_level'] > 0 ) {
-            $latest_album = array();
+    foreach ( $release_query->posts as $release_post ) {
+        $candidate = tuougm_get_album_data( $release_post->ID );
+        if ( ! empty( $candidate ) && ! $candidate['archive_only'] && $candidate['required_level'] <= 0 ) {
+            $latest_album = $candidate;
+            break;
         }
     }
 }

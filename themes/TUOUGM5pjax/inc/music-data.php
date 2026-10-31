@@ -21,9 +21,13 @@ function tuougm_get_album_data($album_id) {
         return [];
     }
 
+    $artist_name = trim( (string) get_field( 'artist_name', $album_id ) );
+
     $album = [
         'id'             => (string) $album_id,
         'title'          => get_the_title($album_id),
+        'artist_name'    => '' !== $artist_name ? $artist_name : 'THE ULTIMATE SIN OF UNBUILT GUNPLA MOUNTAIN',
+        'archive_only'   => (bool) get_field( 'archive_only', $album_id ),
         'title_en'       => get_field('album_title_en', $album_id),
         'type'           => get_field('album_type', $album_id),
         'artwork'        => get_the_post_thumbnail_url($album_id, 'full'),
