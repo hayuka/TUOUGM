@@ -215,6 +215,28 @@ function subFunc( $atts, $content = null ) {
 }
 add_shortcode('sub', 'subFunc');
 
+function tuougm_wrap_shortcode( $atts, $content = null ) {
+    $atts = shortcode_atts(
+        array( 'class' => '' ),
+        $atts,
+        'wrap'
+    );
+
+    $classes = array( 'tuougm-wrap' );
+    $custom_classes = preg_split( '/\s+/', trim( (string) $atts['class'] ), -1, PREG_SPLIT_NO_EMPTY );
+
+    foreach ( $custom_classes as $class_name ) {
+        $class_name = sanitize_html_class( $class_name );
+
+        if ( '' !== $class_name && ! in_array( $class_name, $classes, true ) ) {
+            $classes[] = $class_name;
+        }
+    }
+
+    return '<div class="' . esc_attr( implode( ' ', $classes ) ) . '">' . do_shortcode( (string) $content ) . '</div>';
+}
+add_shortcode( 'wrap', 'tuougm_wrap_shortcode' );
+
 function blockFunc( $atts, $content = null ) {
 	extract( shortcode_atts( array(
         'ttl'     => '',
