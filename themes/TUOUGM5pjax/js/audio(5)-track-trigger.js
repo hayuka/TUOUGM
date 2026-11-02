@@ -652,6 +652,20 @@ function handleEnded() {
   // JSON を参照する。
   // 投稿本文の [tuougm_track] から指定曲を直接再生する。
   // アルバム選択UIは経由せず、対象アルバム＋曲番号を直接指定する。
+  // [tuougm_album] は同じプレイヤーで対象アルバムの1曲目から再生する。
+  $(document).on('click.tuougmAlbumTrigger', '.tuougm-album-trigger[data-player-album]', function(e) {
+    e.preventDefault();
+
+    if (!isReady || !playerData) return;
+
+    const albumId = String($(this).attr('data-player-album') || '');
+    const album = getAlbum(albumId);
+    if (!album || !Array.isArray(album.tracks) || !album.tracks.length) return;
+
+    globalIsPlayingAll = true;
+    setAlbum(albumId, 0, true);
+  });
+
   $(document).on('click.tuougmTrackTrigger', '.tuougm-track-trigger[data-player-track]', function(e) {
     e.preventDefault();
 
