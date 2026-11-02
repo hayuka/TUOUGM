@@ -264,7 +264,7 @@ jQuery(function($) {
 
 		const parts = buildShortcodeParts($('#tuougm-shortcode-type').val());
 		if (!parts) return false;
-		const html = parts.open + '<br />' + contentHtml + '<br />' + parts.close;
+		const html = parts.open + contentHtml + parts.close;
 
 		try {
 			editor.undoManager.transact(function() {
