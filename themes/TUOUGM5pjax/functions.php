@@ -1078,6 +1078,7 @@ add_action('rest_api_init', function() {
     ]);
 });
 require_once get_template_directory() . '/inc/tuougm-track-inserter.php';
+require_once get_template_directory() . '/inc/tuougm-shortcode-inserter.php';
 
 /** Load frontend assets through WordPress dependency management. */
 function tuougm_enqueue_frontend_assets() {
