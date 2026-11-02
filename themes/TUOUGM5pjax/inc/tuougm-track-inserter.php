@@ -29,7 +29,7 @@ function tuougm_track_inserter_media_button() {
 		return;
 	}
 
-	echo '<button type="button" class="button" id="tuougm-track-inserter-open" style="margin-left:6px;">♪ 曲を挿入</button>';
+	echo '<button type="button" class="button" id="tuougm-track-inserter-open" style="margin-left:6px;">♪ 曲・アルバムを挿入</button>';
 }
 
 /**
@@ -99,6 +99,9 @@ function tuougm_track_inserter_admin_assets( $hook_suffix ) {
 		#tuougm-track-modal .tuougm-track-filters select {
 			min-width:0;
 			width:50%;
+		}
+		#tuougm-track-modal .tuougm-track-mode select {
+			width:100%;
 		}
 		#tuougm-track-modal .tuougm-track-list {
 			border:1px solid #ddd;
@@ -174,10 +177,16 @@ jQuery(function($) {
 		<div id="tuougm-track-modal" role="dialog" aria-modal="true" aria-labelledby="tuougm-track-modal-title">
 			<div class="tuougm-track-dialog">
 				<div class="tuougm-track-header">
-					<h2 id="tuougm-track-modal-title">投稿に曲を挿入</h2>
+					<h2 id="tuougm-track-modal-title">投稿に音楽を挿入</h2>
 					<button type="button" class="tuougm-track-close" aria-label="閉じる">&times;</button>
 				</div>
 				<div class="tuougm-track-body">
+					<div class="tuougm-track-mode">
+						<select id="tuougm-track-insert-mode" aria-label="挿入する種類">
+							<option value="track">曲を挿入</option>
+							<option value="album">アルバムを挿入</option>
+						</select>
+					</div>
 					<div class="tuougm-track-filters">
 						<input type="search" id="tuougm-track-search" placeholder="曲名で検索">
 						<select id="tuougm-track-album">
@@ -204,6 +213,22 @@ jQuery(function($) {
 	let selectedId = null;
 	let loaded = false;
 	let searchTimer = null;
+
+	function updateInsertMode() {
+		const isAlbumMode = $('#tuougm-track-insert-mode').val() === 'album';
+		const $album = $('#tuougm-track-album');
+
+		$('#tuougm-track-search').toggle(!isAlbumMode);
+		$album.find('option:first').text(isAlbumMode ? 'アルバムを選択' : 'すべてのアルバム');
+		$list.toggle(!isAlbumMode);
+
+		if (isAlbumMode) {
+			$status.text($album.val() ? '選択したアルバムを挿入します。' : 'アルバムを選択してください。').show();
+			return;
+		}
+
+		renderTracks();
+	}
 
 	function closeModal() {
 		$modal.hide();
@@ -292,7 +317,7 @@ jQuery(function($) {
 			});
 
 			loaded = true;
-			renderTracks();
+			updateInsertMode();
 		})
 		.fail(function() {
 			$status.text('曲の取得に失敗しました。');
@@ -300,18 +325,33 @@ jQuery(function($) {
 	}
 
 	function insertShortcode() {
-		const $checked = $modal.find('input[name="tuougm-track-choice"]:checked');
+		const mode = $('#tuougm-track-insert-mode').val();
+		let shortcode = '';
 
-		if (!$checked.length) {
-			$status.text('挿入する曲を選択してください。').show();
-			return;
+		if (mode === 'album') {
+			const id = parseInt($('#tuougm-track-album').val(), 10);
+
+			if (!Number.isInteger(id) || id < 1) {
+				$status.text('挿入するアルバムを選択してください。').show();
+				return;
+			}
+
+			shortcode = '[tuougm_album id="' + id + '"]';
+		} else {
+			const $checked = $modal.find('input[name="tuougm-track-choice"]:checked');
+
+			if (!$checked.length) {
+				$status.text('挿入する曲を選択してください。').show();
+				return;
+			}
+
+			const id = parseInt($checked.val(), 10);
+
+			if (!Number.isInteger(id) || id < 1) return;
+
+			shortcode = '[tuougm_track id="' + id + '"]';
 		}
 
-		const id = parseInt($checked.val(), 10);
-
-		if (!Number.isInteger(id) || id < 1) return;
-
-		const shortcode = '[tuougm_track id="' + id + '"]';
 		let inserted = false;
 
 		// クラシックエディタ / TinyMCE。
@@ -392,7 +432,19 @@ jQuery(function($) {
 		searchTimer = setTimeout(renderTracks, 120);
 	});
 
-	$modal.on('change', '#tuougm-track-album', renderTracks);
+	$modal.on('change', '#tuougm-track-album', function() {
+		if ($('#tuougm-track-insert-mode').val() === 'album') {
+			updateInsertMode();
+		} else {
+			renderTracks();
+		}
+	});
+	$modal.on('change', '#tuougm-track-insert-mode', function() {
+		if ($(this).val() === 'album') {
+			$('#tuougm-track-album').val('');
+		}
+		updateInsertMode();
+	});
 
 	$modal.on('click', '.tuougm-track-insert', insertShortcode);
 });
@@ -573,6 +625,52 @@ function tuougm_track_inserter_shortcode( $atts ) {
 	return sprintf(
 		'<p class="mbtn_wrap"><button type="button" class="tuougm-track-trigger" data-player-track="%1$d" aria-label="%2$sを再生"><span class="tuougm-track-trigger__icon" aria-hidden="true">▶</span><span class="tuougm-track-trigger__title">%3$s</span></button></p>',
 		$track_id,
+		esc_attr( $title ),
+		esc_html( $title )
+	);
+}
+
+/**
+ * ショートコード:
+ *
+ * [tuougm_album id="123"]
+ *
+ * 公開中かつ閲覧者の会員レベルで再生可能なアルバムだけを表示します。
+ * archive_only は表示先の分類であり、記事からの再生を制限しません。
+ */
+add_shortcode( 'tuougm_album', 'tuougm_album_inserter_shortcode' );
+
+function tuougm_album_inserter_shortcode( $atts ) {
+	$atts = shortcode_atts(
+		array( 'id' => 0 ),
+		$atts,
+		'tuougm_album'
+	);
+
+	$album_id = absint( $atts['id'] );
+
+	if ( ! $album_id || 'music_album' !== get_post_type( $album_id ) ) {
+		return '';
+	}
+
+	$album = tuougm_get_album_data( $album_id );
+	if ( empty( $album ) || empty( $album['tracks'] ) ) {
+		return '';
+	}
+
+	$access_level = function_exists( 'tuougm_player_access_level' )
+		? tuougm_player_access_level()
+		: 0;
+
+	if ( (int) $album['required_level'] > $access_level ) {
+		return '';
+	}
+
+	$title = get_the_title( $album_id );
+
+	return sprintf(
+		'<p class="mbtn_wrap"><button type="button" class="tuougm-track-trigger tuougm-album-trigger" data-player-album="%1$d" aria-label="アルバム「%2$s」を再生"><span class="tuougm-track-trigger__icon" aria-hidden="true">▶</span><span class="tuougm-track-trigger__title">%3$s</span></button></p>',
+		$album_id,
 		esc_attr( $title ),
 		esc_html( $title )
 	);
