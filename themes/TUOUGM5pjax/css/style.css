@@ -3737,3 +3737,16 @@ html.is-changing .transition-fade {
 .wp-caption{
 width:100% !important;
 }
+
+.note_music {
+	border-top: 1px solid #f1f1f1;
+	border-bottom: 1px solid #f1f1f1;
+	padding: 1em;
+	font-size: 90%;
+}
+.note_music p:first-of-type {
+	margin: 0;
+}
+.note_music h3 {
+	font-size: 1.5em;
+}
