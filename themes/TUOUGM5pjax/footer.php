@@ -2,7 +2,7 @@
 $loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['loc'] ) : '';
 $locale = 'en_US' === $loc ? 'en_US' : get_locale();
 ?>
-<footer class="ft">
+<footer id="swup-footer" class="ft">
 <div class="inner_1200 ft_info">
 <div class="ft_cnt">
 <?php if ('en_US' == $locale){ ?>
