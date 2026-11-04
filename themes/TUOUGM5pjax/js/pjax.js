@@ -12,7 +12,7 @@
 	function updatePersistentUI(url) {
 		var targetUrl = url || window.location.href;
 		var path = new URL(targetUrl, window.location.origin).pathname.replace(/\/+$/, '');
-		var isStoryOrMembers = /^\/(members|story)(\/|$)/.test(path);
+		var isStoryOrMembers = /^\/(?:en\/)?(?:members|story)(\/|$)/.test(path);
 
 		$('.ft').toggleClass('is-minimal', isStoryOrMembers);
 	}
@@ -70,7 +70,7 @@
 		}
 
 		var swup = new Swup({
-			containers: ['#swup-header', '#swup'],
+			containers: ['#swup-header', '#swup', '#swup-footer'],
 			plugins: swupPlugins
 		});
 
