@@ -13,11 +13,11 @@ if($loc){
 <div class="kv_catch">
 <?php if ('en_US' == $locale){ ?>
 <h1 class="h1_kv" data-text="THE ULTIMATE SIN OF UNBUILT GUNPLA">THE ULTIMATE SIN OF UNBUILT GUNPLA</h1>
-<p>An Industrial Metal Project<br class="sp">Inspired by Gunpla</p>
+<p>A Gunpla-obsessed, punk-rooted music project.</p>
 <div class="btn_kv ta_c"><a href="javascript:void(0)" class="all_btn" data-player-album="533"><img src="<?php echo get_template_directory_uri(); ?>/img/btn_play_en.webp" alt="PLAY THE FULL ALBUM"></a></div>
 <?php }else{ ?>
 <h1 class="h1_kv" data-text="罪プラの逆襲">罪プラの逆襲</h1>
-<p>ガンプラ × インダストリアルメタルの<br class="sp">音楽プロジェクト</p>
+<p>ガンプラに取り憑かれた、パンクス音楽プロジェクト。</p>
 <div class="btn_kv ta_c"><a href="javascript:void(0)" class="all_btn" data-player-album="533"><img src="<?php echo get_template_directory_uri(); ?>/img/btn_play.webp" alt="アルバムを再生"></a></div>
 <?php } ?>
 </div>
@@ -134,21 +134,18 @@ if ( $latest_album ) :
 <p class="logo_big"><img src="<?php echo get_template_directory_uri(); ?>/img/logo_big.webp" alt=""></p>
 <h2 class="h2_sec">ABOUT</h2>
 <?php if ('en_US' == $locale){ ?>
-<p class="ta_c">THE ULTIMATE SIN OF <br class="sp">UNBUILT GUNPLA MOUNTAIN<br>
-is the world’s first “Gunpla Band”,<br class="sp">born from backgrounds in hardcore punk,<br>
-thrash metal, and modern heavy sounds.<br>
-We turn the common struggles of Gunpla builders<br class="sp">
-into aggressive, mechanical sound.<br>
-This is not just music.<br class="sp">This is a project for builders,<br>
-for those who understand the weight of unbuilt kits.<br>
-If you love music and Gunpla, this will hit you.</p>
+<p class="ta_c">Stacks of boxes. Unfinished builds. An ever-growing mountain of Gunpla.<br><br>
+We turn the everyday struggles of Gunpla builders into music — from punk and metal to electronic sounds, and sometimes even pop.<br><br>
+Our roots go back to the ’80s hardcore punk scene.<br>
+But there are no rules for the sounds we make.<br><br>
+For those who love Gunpla and music.<br>
+We’re still making noise from the mountain of unbuilt kits.</p>
 <?php }else{ ?>
-<p class="ta_c">THE ULTIMATE SIN OF <br class="sp">UNBUILT GUNPLA MOUNTAIN（TUOUGM）は <br>
-ガンプラをテーマにした音楽プロジェクト。<br>
-積み上げられたガンプラ、作りたいのに作れない葛藤、<br class="pc">モデラーなら誰もが一度は経験する「ガンプラあるある」。<br>
-そんな日常を、パンク、メタル、ハードコアなどのエッジを効かせたヘヴィなサウンドへと変換する。<br>
+<p class="ta_c">積み上がる箱。終わらない製作。増え続ける積みプラ。<br><br>
+そんなモデラーの日常を、パンク、メタル、エレクトロニック、時にはポップまで、ジャンル無用のサウンドに変えていく。<br><br>
+ルーツは80年代のハードコアパンクだけど、鳴らす音にルールはない。<br><br>
 ガンプラが好きで、音楽が好き。<br>
-そんなすべてのモデラーに向けて、まだ組まれていないガンプラの山から、新しい音を鳴らしていきます。</p>
+そんなヤツらに向けて、今日も未完成の山から音を鳴らす。</p>
 <?php } ?>
 <p class="btn btn_t_about"><a href="<?php echo get_bloginfo('url'); ?>/about/">ABOUT</a></p>
 </div>
