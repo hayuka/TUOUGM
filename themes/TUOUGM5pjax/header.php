@@ -41,7 +41,7 @@ if ( is_home() || is_front_page() ){
 }else{
 }
 if ( is_front_page() ) {
-  $desc = "Japanese industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
+  $desc = "TUOUGM is a Gunpla-obsessed, punk-rooted music project. From hardcore punk and metal to electronic and pop, we turn the struggles of unbuilt Gunpla into genre-bending music.";
 } elseif ( is_singular('post') ) {
   if ( has_excerpt() ) {
     $desc = get_the_excerpt();
