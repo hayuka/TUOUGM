@@ -141,11 +141,11 @@ But there are no rules for the sounds we make.<br><br>
 For those who love Gunpla and music.<br>
 We’re still making noise from the mountain of unbuilt kits.</p>
 <?php }else{ ?>
-<p class="ta_c">積み上がる箱。終わらない製作。増え続ける積みプラ。<br><br>
-そんなモデラーの日常を、パンク、メタル、エレクトロニック、時にはポップまで、ジャンル無用のサウンドに変えていく。<br><br>
-ルーツは80年代のハードコアパンクだけど、鳴らす音にルールはない。<br><br>
+<p class="ta_c">積み上がる箱、終わらない製作、<br class="sp">増え続ける積みプラ<br><br>
+そんなモデラーの日常を、<br class="sp">パンク、メタル、エレクトロニック、時にはポップまで、ジャンル無用のサウンドに変えていく。<br><br>
+ルーツは80年代のハードコアパンクだけど、<br class="sp">鳴らす音にルールはない。<br><br>
 ガンプラが好きで、音楽が好き。<br>
-そんなヤツらに向けて、今日も未完成の山から音を鳴らす。</p>
+そんなヤツらに向けて、<br class="sp">今日も未完成の山から音を鳴らす。</p>
 <?php } ?>
 <p class="btn btn_t_about"><a href="<?php echo get_bloginfo('url'); ?>/about/">ABOUT</a></p>
 </div>
