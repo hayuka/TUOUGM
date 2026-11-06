@@ -1,56 +1,92 @@
-<?php 
+<?php
 $loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['loc'] ) : '';
 $locale = 'en_US' === $loc ? 'en_US' : get_locale();
+$is_english = 'en_US' === $locale;
+$footer_home_url = home_url( '/' );
+if ( $is_english && function_exists( 'bogo_url' ) ) {
+	$footer_home_url = bogo_url( $footer_home_url, 'en_US' );
+}
+$footer_page_url = static function ( $path ) use ( $is_english ) {
+	$url = home_url( $path );
+	if ( '/story/' === $path ) {
+		return function_exists( 'bogo_url' ) ? bogo_url( $url, 'ja' ) : $url;
+	}
+	return function_exists( 'bogo_url' )
+		? bogo_url( $url, $is_english ? 'en_US' : 'ja' )
+		: $url;
+};
+$members_url = '';
+$japanese_members_page = function_exists( 'bogo_get_page_by_path' )
+	? bogo_get_page_by_path( 'members', 'ja', 'page' )
+	: get_page_by_path( 'members' );
+if ( $japanese_members_page && 'publish' === get_post_status( $japanese_members_page ) ) {
+	$members_page = $japanese_members_page;
+	if ( $is_english ) {
+		$members_page = function_exists( 'bogo_get_post_translation' )
+			? bogo_get_post_translation( $japanese_members_page->ID, 'en_US' )
+			: null;
+	}
+	if ( $members_page && 'publish' === get_post_status( $members_page ) ) {
+		$members_url = get_permalink( $members_page );
+	}
+}
+$privacy_url = get_privacy_policy_url();
 ?>
 <footer id="swup-footer" class="ft">
-<div class="inner_1200 ft_info">
-<div class="ft_cnt">
-<?php if ('en_US' == $locale){ ?>
-<p>TUOUGM is a Japanese industrial metal project<br>
-inspired by Gunpla, mecha culture,<br>
-anime aesthetics and the world of unbuilt Gundam models.<br>
-Combining heavy guitars, cinematic sound design<br>
-and original storytelling,<br>
-<br>
-TUOUGM creates music for Gunpla builders around the world.<br>
-<br>
+	<div class="inner_1200 ft_info">
+		<div class="ft_brand_header">
+			<a class="ft_brand_link" href="<?php echo esc_url( $footer_home_url ); ?>">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/img/newlogo.png' ); ?>" alt="" width="42" height="46">
+				<span>TUOUGM</span>
+			</a>
+		</div>
+		<div class="ft_grid">
+			<p class="ft_brand_copy">Born from Hardcore.<br>Built on Gunpla.<br>Driven by Noise.</p>
 
-Please do not reupload our audio.
-Sharing and feedback are always welcome.</p>
-<?php }else{ ?>
-<p>インダストリアルメタル × ガンプラ（プラモデル）の世界観で制作している音楽プロジェクト「TUOUGM」<br>
-日本発のインダストリアルメタル・プロジェクトです。<br>
-アニメ、ロボット、模型文化から影響を受け、アニソンとは異なる重厚なサウンドでガンプラビルダーの物語を表現しています。<br>
-本サイトでは楽曲の公開・更新情報をはじめ、制作コンセプトやビジュアルとともに発信しています。<br>
-<br>
-音源の無断転載はご遠慮ください。<br>
-シェアや感想の投稿は大歓迎です。</p>
-<?php } ?>
-</div>
-<div class="sns_box flex_wrap_center">
-<div class="sns_button twitter">
-<a href="https://x.com/zakubaka" title="Tweet" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
-</div>
-<!--
-<div class="sns_button facebook">
-<a href="###" title="Facebook"><i class="fa fa-facebook"></i></a>
-</div>
--->
-<div class="sns_button instagram">
-<a href="https://www.instagram.com/zakubaka/" title="instagram" target="_blank"><i class="fa fa-instagram"></i></a>
-</div>
-<div class="sns_button youtube">
-<a href="https://www.youtube.com/@zakubakamodeling" title="youtube" target="_blank"><i class="fa fa-youtube"></i></a>
-</div><div class="sns_button tiktok">
-<a href="https://www.tiktok.com/@zakubaka2" title="tiktok" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
-</div>
-</div>
-</div>
-<?php if ('en_US' == $locale){ ?>
-<p class="copy">©︎ Gunpla Research Institute GUNPLA MODELING</p>
-<?php }else{ ?>
-<p class="copy">©︎ ガンプラ技術研究所</p>
-<?php } ?>
+			<nav class="ft_nav" aria-label="Explore">
+				<h2>EXPLORE</h2>
+				<ul>
+					<li><a href="<?php echo esc_url( $footer_page_url( '/music/' ) ); ?>">MUSIC</a></li>
+					<li><a href="<?php echo esc_url( $footer_page_url( '/story/' ) ); ?>">STORY</a></li>
+					<li><a href="<?php echo esc_url( $footer_page_url( '/archives/' ) ); ?>">ARCHIVES</a></li>
+					<li>
+						<?php if ( $members_url ) : ?>
+							<a href="<?php echo esc_url( $members_url ); ?>">MEMBERS</a>
+						<?php else : ?>
+							<span class="ft_nav_unavailable" aria-disabled="true">MEMBERS</span>
+						<?php endif; ?>
+					</li>
+				</ul>
+			</nav>
+
+			<section class="ft_social" aria-labelledby="ft-social-title">
+				<h2 id="ft-social-title">FOLLOW THE NOISE</h2>
+				<ul>
+					<li><a href="https://www.instagram.com/zakubaka/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram" aria-hidden="true"></i><span>Instagram</span></a></li>
+					<li><span class="ft_social_unavailable"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i><span>Facebook</span></span></li>
+					<li><a href="https://www.youtube.com/@zakubakamodeling" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>YouTube</span></a></li>
+					<li><a href="https://www.tiktok.com/@zakubaka2" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok" aria-hidden="true"></i><span>TikTok</span></a></li>
+				</ul>
+			</section>
+		</div>
+	</div>
+
+	<div class="ft_bottom">
+		<div class="inner_1200 ft_bottom_inner">
+			<p class="ft_copy">
+				<?php if ( $is_english ) : ?>
+					©︎ <?php echo esc_html( wp_date( 'Y' ) ); ?> Gunpla Research Institute GUNPLA MODELING
+				<?php else : ?>
+					©︎ <?php echo esc_html( wp_date( 'Y' ) ); ?> ガンプラ技術研究所
+				<?php endif; ?>
+			</p>
+			<div class="ft_bottom_links">
+				<?php if ( $privacy_url ) : ?>
+					<a class="ft_privacy" href="<?php echo esc_url( $privacy_url ); ?>"><?php echo $is_english ? 'Privacy Policy' : 'プライバシーポリシー'; ?></a>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
 </footer>
 
 <div class="player">
