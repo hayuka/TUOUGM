@@ -2,6 +2,10 @@
 $loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['loc'] ) : '';
 $locale = 'en_US' === $loc ? 'en_US' : get_locale();
 $is_english = 'en_US' === $locale;
+$footer_home_url = home_url( '/' );
+if ( $is_english && function_exists( 'bogo_url' ) ) {
+	$footer_home_url = bogo_url( $footer_home_url, 'en_US' );
+}
 $footer_page_url = static function ( $path ) use ( $is_english ) {
 	$url = home_url( $path );
 	if ( '/story/' === $path ) {
@@ -32,7 +36,7 @@ $privacy_url = get_privacy_policy_url();
 <footer id="swup-footer" class="ft">
 	<div class="inner_1200 ft_info">
 		<div class="ft_brand_header">
-			<a class="ft_brand_link" href="<?php echo esc_url( home_url( '/' ) ); ?>">
+			<a class="ft_brand_link" href="<?php echo esc_url( $footer_home_url ); ?>">
 				<img src="<?php echo esc_url( get_template_directory_uri() . '/img/newlogo.png' ); ?>" alt="" width="42" height="46">
 				<span>TUOUGM</span>
 			</a>

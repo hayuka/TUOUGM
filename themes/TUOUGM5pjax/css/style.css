@@ -1126,7 +1126,6 @@ btn
 	.ft_bottom_inner{align-items: flex-start; flex-direction: column; gap: 12px; padding-top: 18px; padding-bottom: 18px;}
 	.ft_bottom_links{flex-wrap: wrap; gap: 14px;}
 	.ft{padding-bottom: calc(100px + env(safe-area-inset-bottom));}
-	body:has(.player.active) #swup-footer{padding-bottom: calc(100svh - var(--hh) + 24px);}
 }
 @media screen and (max-width: 360px) {
 	.ft_grid{gap: 28px 16px;}
