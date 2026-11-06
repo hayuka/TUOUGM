@@ -28,19 +28,6 @@ if ( $japanese_members_page && 'publish' === get_post_status( $japanese_members_
 	}
 }
 $privacy_url = get_privacy_policy_url();
-$footer_language_links = function_exists( 'bogo_language_switcher_links' ) ? bogo_language_switcher_links() : array();
-$uses_story_locale_query = is_post_type_archive( 'story' ) || is_tax( array( 'story_category', 'story_type' ) );
-$story_locale_url = '';
-if ( $uses_story_locale_query ) {
-	$story_view_url = is_post_type_archive( 'story' )
-		? get_post_type_archive_link( 'story' )
-		: get_term_link( get_queried_object() );
-	if ( ! is_wp_error( $story_view_url ) ) {
-		$story_locale_url = function_exists( 'bogo_url' )
-			? bogo_url( $story_view_url, 'ja' )
-			: $story_view_url;
-	}
-}
 ?>
 <footer id="swup-footer" class="ft">
 	<div class="inner_1200 ft_info">
@@ -93,39 +80,6 @@ if ( $uses_story_locale_query ) {
 			<div class="ft_bottom_links">
 				<?php if ( $privacy_url ) : ?>
 					<a class="ft_privacy" href="<?php echo esc_url( $privacy_url ); ?>"><?php echo $is_english ? 'Privacy Policy' : 'プライバシーポリシー'; ?></a>
-				<?php endif; ?>
-				<?php if ( $footer_language_links ) : ?>
-					<ul class="bogo-language-switcher list-view">
-						<?php foreach ( $footer_language_links as $language_link ) : ?>
-							<?php
-							$language_locale = $language_link['locale'];
-							$language_label  = 'ja' === $language_locale ? 'JP' : 'EN';
-							$is_current      = $locale === $language_locale;
-							$language_url    = isset( $language_link['href'] ) ? $language_link['href'] : '';
-							if ( $uses_story_locale_query && $story_locale_url ) {
-								$language_url = 'en_US' === $language_locale
-									? add_query_arg( 'loc', 'en_US', $story_locale_url )
-									: $story_locale_url;
-							}
-							$language_class  = array_filter( array(
-								function_exists( 'bogo_language_tag' ) ? bogo_language_tag( $language_locale ) : '',
-								function_exists( 'bogo_lang_slug' ) ? bogo_lang_slug( $language_locale ) : '',
-								$is_current ? 'current' : ( $language_url ? '' : 'unavailable' ),
-							) );
-							?>
-							<li class="<?php echo esc_attr( implode( ' ', $language_class ) ); ?>">
-								<span class="bogo-language-name">
-									<?php if ( $is_current ) : ?>
-										<span class="current" aria-current="page"><?php echo esc_html( $language_label ); ?></span>
-									<?php elseif ( $language_url ) : ?>
-										<a rel="alternate" hreflang="<?php echo esc_attr( $language_link['lang'] ); ?>" href="<?php echo esc_url( $language_url ); ?>" title="<?php echo esc_attr( $language_label ); ?>"><?php echo esc_html( $language_label ); ?></a>
-									<?php else : ?>
-										<span class="ft_language_unavailable" aria-disabled="true" title="<?php echo esc_attr( $language_label ); ?>"><?php echo esc_html( $language_label ); ?></span>
-									<?php endif; ?>
-								</span>
-							</li>
-						<?php endforeach; ?>
-					</ul>
 				<?php endif; ?>
 			</div>
 		</div>

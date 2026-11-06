@@ -1101,47 +1101,12 @@ btn
 	align-items: center;
 	gap: 24px;
 }
-.ft_privacy,
-.ft_bottom .bogo-language-switcher a,
-.ft_bottom .bogo-language-switcher .current{
+.ft_privacy{
 	color: #e5e5e5;
 	font-size: 12px;
 	text-decoration: none;
 }
-.ft_privacy:hover,
-.ft_bottom .bogo-language-switcher a:hover{color: #fff;}
-.ft_bottom .bogo-language-switcher{
-	display: flex;
-	align-items: center;
-	flex-direction: row-reverse;
-	gap: 0;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	line-height: 1;
-}
-.ft_bottom .bogo-language-switcher li{
-	display: flex;
-	align-items: center;
-	margin: 0;
-	line-height: 1;
-}
-.ft_bottom .bogo-language-switcher li:first-child::before{
-	content: "/";
-	display: inline-flex;
-	align-items: center;
-	line-height: 1;
-	padding: 0 8px;
-	color: #777;
-}
-.ft_bottom .bogo-language-name{
-	display: flex;
-	align-items: center;
-	line-height: 1;
-}
-.ft_bottom .bogo-language-switcher .current,
-.ft_bottom .bogo-language-switcher a{line-height: 1;}
-.ft_bottom .bogo-language-switcher .ft_language_unavailable{color: #777;}
+.ft_privacy:hover{color: #fff;}
 
 @media screen and (max-width: 1020px) {
 	.ft_grid{gap: 32px;}
