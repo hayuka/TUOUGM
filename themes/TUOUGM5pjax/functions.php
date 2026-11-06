@@ -63,14 +63,6 @@ function bogo_language_link_text_change ($links) {
             $links[$key]['native_name'] = 'EN';
         }
 
-        // Track pages use the same post for both languages, with the English
-        // version addressed through the /en/tracks/<slug>/ route.
-        if ( is_singular( 'music_track' ) ) {
-            $links[$key]['href'] = tuougm_get_track_language_url(
-                get_queried_object_id(),
-                $value['locale']
-            );
-        }
     }
     return $links;
 }

@@ -3,37 +3,43 @@ $loc = isset( $_GET['loc'] ) && is_string( $_GET['loc'] ) ? wp_unslash( $_GET['l
 $locale = 'en_US' === $loc ? 'en_US' : get_locale();
 $is_english = 'en_US' === $locale;
 $footer_page_url = static function ( $path ) use ( $is_english ) {
-	if ( ! $is_english ) {
-		return home_url( $path );
+	$url = home_url( $path );
+	if ( '/story/' === $path ) {
+		$url = function_exists( 'bogo_url' ) ? bogo_url( $url, 'ja' ) : $url;
+		return $is_english ? add_query_arg( 'loc', 'en_US', $url ) : $url;
 	}
-	$site_url = untrailingslashit( get_option( 'home' ) );
-	return add_query_arg( 'loc', 'en_US', $site_url . '/' . ltrim( $path, '/' ) );
+	return function_exists( 'bogo_url' )
+		? bogo_url( $url, $is_english ? 'en_US' : 'ja' )
+		: $url;
 };
-$members_url = home_url( '/members/' );
-if ( $is_english ) {
-	$english_members_page = function_exists( 'bogo_get_page_by_path' )
-		? bogo_get_page_by_path( 'members', 'en_US', 'page' )
-		: null;
-	$members_url = $english_members_page && 'publish' === get_post_status( $english_members_page )
-		? ( function_exists( 'bogo_url' ) ? bogo_url( get_permalink( $english_members_page ), 'en_US' ) : get_permalink( $english_members_page ) )
-		: '';
+$members_url = '';
+$japanese_members_page = function_exists( 'bogo_get_page_by_path' )
+	? bogo_get_page_by_path( 'members', 'ja', 'page' )
+	: get_page_by_path( 'members' );
+if ( $japanese_members_page && 'publish' === get_post_status( $japanese_members_page ) ) {
+	$members_page = $japanese_members_page;
+	if ( $is_english ) {
+		$members_page = function_exists( 'bogo_get_post_translation' )
+			? bogo_get_post_translation( $japanese_members_page->ID, 'en_US' )
+			: null;
+	}
+	if ( $members_page && 'publish' === get_post_status( $members_page ) ) {
+		$members_url = get_permalink( $members_page );
+	}
 }
 $privacy_url = get_privacy_policy_url();
 $footer_language_links = function_exists( 'bogo_language_switcher_links' ) ? bogo_language_switcher_links() : array();
-$request_uri = isset( $_SERVER['REQUEST_URI'] ) && is_string( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
-$request_path = wp_parse_url( $request_uri, PHP_URL_PATH );
-$language_path = is_string( $request_path ) ? untrailingslashit( $request_path ) : '';
-$english_slug = function_exists( 'bogo_lang_slug' ) ? bogo_lang_slug( 'en_US' ) : 'en';
-$language_path = preg_replace( '#^/' . preg_quote( $english_slug, '#' ) . '(?=/|$)#', '', $language_path );
-$language_path = '' === $language_path ? '/' : trailingslashit( $language_path );
-$uses_locale_query = in_array( untrailingslashit( $language_path ), array( '/music', '/story', '/archives' ), true );
-$footer_language_base_url = '';
-$footer_language_query = array();
-if ( $uses_locale_query ) {
-	$site_url = untrailingslashit( get_option( 'home' ) );
-	$footer_language_base_url = '/' === $language_path ? trailingslashit( $site_url ) : $site_url . $language_path;
-	parse_str( (string) wp_parse_url( $request_uri, PHP_URL_QUERY ), $footer_language_query );
-	unset( $footer_language_query['loc'], $footer_language_query['lang'] );
+$uses_story_locale_query = is_post_type_archive( 'story' ) || is_tax( array( 'story_category', 'story_type' ) );
+$story_locale_url = '';
+if ( $uses_story_locale_query ) {
+	$story_view_url = is_post_type_archive( 'story' )
+		? get_post_type_archive_link( 'story' )
+		: get_term_link( get_queried_object() );
+	if ( ! is_wp_error( $story_view_url ) ) {
+		$story_locale_url = function_exists( 'bogo_url' )
+			? bogo_url( $story_view_url, 'ja' )
+			: $story_view_url;
+	}
 }
 ?>
 <footer id="swup-footer" class="ft">
@@ -88,33 +94,38 @@ if ( $uses_locale_query ) {
 				<?php if ( $privacy_url ) : ?>
 					<a class="ft_privacy" href="<?php echo esc_url( $privacy_url ); ?>"><?php echo $is_english ? 'Privacy Policy' : 'プライバシーポリシー'; ?></a>
 				<?php endif; ?>
-				<?php if ( $uses_locale_query && $footer_language_links ) : ?>
+				<?php if ( $footer_language_links ) : ?>
 					<ul class="bogo-language-switcher list-view">
 						<?php foreach ( $footer_language_links as $language_link ) : ?>
 							<?php
 							$language_locale = $language_link['locale'];
 							$language_label  = 'ja' === $language_locale ? 'JP' : 'EN';
 							$is_current      = $locale === $language_locale;
-							$language_url    = $footer_language_base_url;
-							if ( 'en_US' === $language_locale ) {
-								$language_url = add_query_arg( array_merge( $footer_language_query, array( 'loc' => 'en_US' ) ), $language_url );
-							} elseif ( $footer_language_query ) {
-								$language_url = add_query_arg( $footer_language_query, $language_url );
+							$language_url    = isset( $language_link['href'] ) ? $language_link['href'] : '';
+							if ( $uses_story_locale_query && $story_locale_url ) {
+								$language_url = 'en_US' === $language_locale
+									? add_query_arg( 'loc', 'en_US', $story_locale_url )
+									: $story_locale_url;
 							}
+							$language_class  = array_filter( array(
+								function_exists( 'bogo_language_tag' ) ? bogo_language_tag( $language_locale ) : '',
+								function_exists( 'bogo_lang_slug' ) ? bogo_lang_slug( $language_locale ) : '',
+								$is_current ? 'current' : ( $language_url ? '' : 'unavailable' ),
+							) );
 							?>
-							<li class="<?php echo esc_attr( implode( ' ', array_filter( array( bogo_language_tag( $language_locale ), bogo_lang_slug( $language_locale ), $is_current ? 'current' : '' ) ) ) ); ?>">
+							<li class="<?php echo esc_attr( implode( ' ', $language_class ) ); ?>">
 								<span class="bogo-language-name">
 									<?php if ( $is_current ) : ?>
 										<span class="current" aria-current="page"><?php echo esc_html( $language_label ); ?></span>
-									<?php else : ?>
+									<?php elseif ( $language_url ) : ?>
 										<a rel="alternate" hreflang="<?php echo esc_attr( $language_link['lang'] ); ?>" href="<?php echo esc_url( $language_url ); ?>" title="<?php echo esc_attr( $language_label ); ?>"><?php echo esc_html( $language_label ); ?></a>
+									<?php else : ?>
+										<span class="ft_language_unavailable" aria-disabled="true" title="<?php echo esc_attr( $language_label ); ?>"><?php echo esc_html( $language_label ); ?></span>
 									<?php endif; ?>
 								</span>
 							</li>
 						<?php endforeach; ?>
 					</ul>
-				<?php else : ?>
-					<?php echo do_shortcode( '[bogo]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				<?php endif; ?>
 			</div>
 		</div>

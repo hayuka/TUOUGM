@@ -1141,6 +1141,7 @@ btn
 }
 .ft_bottom .bogo-language-switcher .current,
 .ft_bottom .bogo-language-switcher a{line-height: 1;}
+.ft_bottom .bogo-language-switcher .ft_language_unavailable{color: #777;}
 
 @media screen and (max-width: 1020px) {
 	.ft_grid{gap: 32px;}
