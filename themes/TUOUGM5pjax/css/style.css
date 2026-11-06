@@ -990,11 +990,15 @@ btn
 	position: relative;
 	z-index: 1;
 }
+.ft_brand_header{
+	padding: 30px 0 34px;
+	border-bottom: 1px solid rgba(255,255,255,.16);
+}
 .ft_grid{
 	display: grid;
-	grid-template-columns: minmax(0, 1.35fr) minmax(150px, .7fr) minmax(220px, .9fr);
-	gap: clamp(32px, 6vw, 96px);
-	padding: 30px 0 64px;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(24px, 5vw, 72px);
+	padding: 34px 0 64px;
 }
 .ft_brand_link{
 	display: inline-flex;
@@ -1021,7 +1025,7 @@ btn
 	outline-offset: 4px;
 }
 .ft_brand_copy{
-	margin: 22px 0 0;
+	margin: 4px 0 0;
 	color: #f1f1f1;
 	font-family: "Saira", "Noto Sans JP", sans-serif;
 	font-size: 16px;
@@ -1107,34 +1111,50 @@ btn
 .ft_privacy:hover,
 .ft_bottom .bogo-language-switcher a:hover{color: #fff;}
 .ft_bottom .bogo-language-switcher{
+	display: flex;
+	align-items: center;
+	flex-direction: row-reverse;
+	gap: 0;
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	line-height: 1;
 }
 .ft_bottom .bogo-language-switcher li{
-	display: inline-block;
+	display: flex;
+	align-items: center;
 	margin: 0;
+	line-height: 1;
 }
-.ft_bottom .bogo-language-switcher li + li::before{
+.ft_bottom .bogo-language-switcher li:first-child::before{
 	content: "/";
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
 	padding: 0 8px;
 	color: #777;
 }
-.ft_bottom .bogo-language-name{display: inline;}
+.ft_bottom .bogo-language-name{
+	display: flex;
+	align-items: center;
+	line-height: 1;
+}
+.ft_bottom .bogo-language-switcher .current,
+.ft_bottom .bogo-language-switcher a{line-height: 1;}
 
 @media screen and (max-width: 1020px) {
 	.ft_grid{gap: 32px;}
 }
 @media screen and (max-width: 768px) {
 	.ft{padding-top: 50px;}
+	.ft_brand_header{padding: 12px 0 24px;}
 	.ft_grid{
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		gap: 34px 24px;
-		padding-top: 12px;
+		padding-top: 24px;
 		padding-bottom: 36px;
 	}
-	.ft_brand{grid-column: 1 / -1;}
-	.ft_brand_copy{margin-top: 16px; font-size: 15px;}
+	.ft_brand_copy{grid-column: 1 / -1; margin-top: 0; font-size: 15px;}
 	.ft_nav h2,
 	.ft_social h2{margin-bottom: 16px;}
 	.ft_bottom_inner{align-items: flex-start; flex-direction: column; gap: 12px; padding-top: 18px; padding-bottom: 18px;}

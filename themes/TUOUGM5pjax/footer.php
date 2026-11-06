@@ -38,14 +38,14 @@ if ( $uses_locale_query ) {
 ?>
 <footer id="swup-footer" class="ft">
 	<div class="inner_1200 ft_info">
+		<div class="ft_brand_header">
+			<a class="ft_brand_link" href="<?php echo esc_url( home_url( '/' ) ); ?>">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/img/newlogo.png' ); ?>" alt="" width="42" height="46">
+				<span>TUOUGM</span>
+			</a>
+		</div>
 		<div class="ft_grid">
-			<section class="ft_brand" aria-label="TUOUGM">
-				<a class="ft_brand_link" href="<?php echo esc_url( home_url( '/' ) ); ?>">
-					<img src="<?php echo esc_url( get_template_directory_uri() . '/img/newlogo.png' ); ?>" alt="" width="42" height="46">
-					<span>TUOUGM</span>
-				</a>
-				<p class="ft_brand_copy">Born from Hardcore.<br>Built on Gunpla.<br>Driven by Noise.</p>
-			</section>
+			<p class="ft_brand_copy">Born from Hardcore.<br>Built on Gunpla.<br>Driven by Noise.</p>
 
 			<nav class="ft_nav" aria-label="Explore">
 				<h2>EXPLORE</h2>
