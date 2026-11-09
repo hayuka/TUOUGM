@@ -10,8 +10,8 @@ if ( is_singular( 'music_track' ) ) {
 		: '';
 	$track_meta_description_plain = trim( wp_strip_all_tags( $track_meta_description ) );
 	$track_meta_description_fallback = 'en_US' === $locale
-		? 'An industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.'
-		: 'ガンプラをテーマにした音楽プロジェクトTUOUGM。';
+		? 'TUOUGM is a Gunpla-obsessed, punk-rooted music project. From hardcore punk and metal to electronic and pop, we turn the struggles of unbuilt Gunpla into genre-bending music.'
+		: 'TUOUGM（トゥーオGM）は、ガンプラに取り憑かれたパンクス音楽プロジェクト。80年代ハードコアパンクをルーツに、メタル、エレクトロニック、ポップまでジャンル無用のサウンドを鳴らす。';
 	if ( 'en_US' === $locale && function_exists( 'get_field' ) ) {
 		$track_meta_title_en = get_field( 'track_title_en', $track_meta_id );
 		if ( $track_meta_title_en ) {
@@ -37,10 +37,9 @@ if ('en_US' == $locale){
 if ('en_US' == $locale){
 if ( is_home() || is_front_page() ){
 	$ttl_og = "The Ultimate Sin of Unbuilt Gunpla | TUOUGM";
-	$disc_og = "Unbuilt Gunpla still has a voice.";
 }else{
 }
-if ( is_front_page() ) {
+if ( is_front_page() || is_home() ) {
   $desc = "TUOUGM is a Gunpla-obsessed, punk-rooted music project. From hardcore punk and metal to electronic and pop, we turn the struggles of unbuilt Gunpla into genre-bending music.";
 } elseif ( is_singular('post') ) {
   if ( has_excerpt() ) {
@@ -53,18 +52,17 @@ if ( is_front_page() ) {
     ? wp_trim_words( $track_meta_description_plain, 120 )
     : $track_meta_description_fallback;
 } elseif ( is_archive() ) {
-  $desc = "An industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
+  $desc = "Browse TUOUGM music, releases, videos, and articles from a Gunpla-obsessed, punk-rooted music project.";
 } else {
-  $desc = "An industrial metal project inspired by Gunpla. Heavy sound, mechanical grooves, and the urge to build — transformed into music.";
+  $desc = "TUOUGM is a Gunpla-obsessed, punk-rooted music project. From hardcore punk and metal to electronic and pop, we turn the struggles of unbuilt Gunpla into genre-bending music.";
 }
 } else {
 if ( is_home() || is_front_page() ){
 	$ttl_og = "罪プラの逆襲、開幕｜TUOUGM";
-	$disc_og = "ガンプラ×メタルの衝動。未組みの罪を鳴らせ。";
 }else{
 }
-if ( is_front_page() ) {
-  $desc = "ガンプラ（Gunpla）をテーマにしたインダストリアルメタル音楽プロジェクトTUOUGM。重厚なサウンドと機械的グルーヴで模型の作り込みを音で表現。";
+if ( is_front_page() || is_home() ) {
+  $desc = "TUOUGM（トゥーオGM）は、ガンプラに取り憑かれたパンクス音楽プロジェクト。80年代ハードコアパンクをルーツに、メタル、エレクトロニック、ポップまでジャンル無用のサウンドを鳴らす。";
 } elseif ( is_singular('post') ) {
   if ( has_excerpt() ) {
     $desc = get_the_excerpt();
@@ -76,10 +74,13 @@ if ( is_front_page() ) {
     ? wp_trim_words( $track_meta_description_plain, 120 )
     : $track_meta_description_fallback;
 } elseif ( is_archive() ) {
-  $desc = "ガンプラ×インダストリアルメタルプロジェクトTUOUGMの楽曲・リリース・動画など最新情報一覧。";
+  $desc = "TUOUGMの楽曲・リリース・動画・記事など、ガンプラに取り憑かれた音楽プロジェクトの最新情報一覧。";
 } else {
-  $desc = "ガンプラをテーマにした音楽プロジェクトTUOUGM。";
+  $desc = "TUOUGM（トゥーオGM）は、ガンプラに取り憑かれたパンクス音楽プロジェクト。80年代ハードコアパンクをルーツに、メタル、エレクトロニック、ポップまでジャンル無用のサウンドを鳴らす。";
 }
+}
+if ( is_home() || is_front_page() ) {
+	$disc_og = $desc;
 }
 // 改行除去（地味に重要）
 $desc = str_replace(array("\r\n", "\n", "\r"), '', $desc);
@@ -115,7 +116,7 @@ if ( is_singular('post') && has_post_thumbnail() ) {
 <title><?php echo esc_html( $ttl_og ); ?></title>
 <?php } elseif ('en_US' == $locale){ ?>
 <?php if ( is_archive() ) { ?>
-<title>Latest Transmission from the Gunpla × Metal Project | The Ultimate Sin of Unbuilt Gunpla | TUOUGM</title>
+<title>Latest Transmissions from TUOUGM | The Ultimate Sin of Unbuilt Gunpla | TUOUGM</title>
 <?php }else{ ?>
 <title><?php wp_title( '｜', true, 'right' ); ?>The Ultimate Sin of Unbuilt Gunpla | TUOUGM</title>
 <?php } ?>
