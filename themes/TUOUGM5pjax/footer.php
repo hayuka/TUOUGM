@@ -62,10 +62,10 @@ $privacy_url = get_privacy_policy_url();
 			<section class="ft_social" aria-labelledby="ft-social-title">
 				<h2 id="ft-social-title">FOLLOW THE NOISE</h2>
 				<ul>
-					<li><a href="https://www.instagram.com/zakubaka/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram" aria-hidden="true"></i><span>Instagram</span></a></li>
-					<li><span class="ft_social_unavailable"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i><span>Facebook</span></span></li>
-					<li><a href="https://www.youtube.com/@zakubakamodeling" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>YouTube</span></a></li>
-					<li><a href="https://www.tiktok.com/@zakubaka2" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok" aria-hidden="true"></i><span>TikTok</span></a></li>
+					<li><a href="https://www.instagram.com/tuougm/" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram" aria-hidden="true"></i><span>Instagram</span></a></li>
+					<li><a href="https://www.facebook.com/profile.php?id=61589983735801" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i><span>Facebook</span></a></li>
+					<li><a href="https://www.youtube.com/@TUOUGM" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span>YouTube</span></a></li>
+					<!-- <li><a href="https://www.tiktok.com/@zakubaka2" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-tiktok" aria-hidden="true"></i><span>TikTok</span></a></li> -->
 				</ul>
 			</section>
 		</div>
