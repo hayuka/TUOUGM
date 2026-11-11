@@ -926,7 +926,6 @@ function handleEnded() {
 
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') {
-      isTransitioning = false;
       updateUI();
     }
   });
