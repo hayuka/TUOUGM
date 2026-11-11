@@ -3336,6 +3336,20 @@ input:-webkit-autofill:focus {
 	font-weight: 900;
 	margin-bottom: 20px;
 }
+.player_wake_lock_setting{
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 20px;
+	color: #fff;
+	font-size: 13px;
+	line-height: 1.4;
+	cursor: pointer;
+}
+.player_wake_lock_toggle{
+	margin: 0;
+	accent-color: #3476a1;
+}
 .player_menu_inner{
 	gap:40px;
 }

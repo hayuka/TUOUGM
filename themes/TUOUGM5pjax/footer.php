@@ -90,6 +90,10 @@ $privacy_url = get_privacy_policy_url();
 <div class="menu_toggle"></div>
 <div class="player_menu">
 <h2>MUSIC LIBRARY</h2>
+<label class="player_wake_lock_setting">
+<input class="player_wake_lock_toggle" type="checkbox">
+<span>Keep screen awake</span>
+</label>
 <div class="player_menu_inner flex_wrap">
 
 <div class="wrap_album">

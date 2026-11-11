@@ -10,6 +10,18 @@
   let keepActiveDuringTransition = false;
   let isRepeat = false;
   let isReady = false;
+  let isScreenWakeLockEnabled = false;
+  let screenWakeLock = null;
+  let screenWakeLockRequest = null;
+  let screenWakeLockRequestId = 0;
+
+  const SCREEN_WAKE_LOCK_STORAGE_KEY = 'tuougmScreenWakeLockEnabled';
+
+  try {
+    isScreenWakeLockEnabled = localStorage.getItem(SCREEN_WAKE_LOCK_STORAGE_KEY) === 'true';
+  } catch (error) {
+    // 設定保存が利用できなくても、通常のプレイヤー操作は継続する。
+  }
 
   const ARTIST_NAME = 'THE ULTIMATE SIN OF UNBUILT GUNPLA MOUNTAIN';
   const API_URL = new URL('/wp-json/tuougm/v1/player', location.origin).href;
@@ -36,6 +48,63 @@
 
   function getCurrentTrack() {
     return globalCurrentPlaylist[globalCurrentIndex] || null;
+  }
+
+  function shouldHoldScreenWakeLock() {
+    const audio = globalCurrentAudio;
+    return !!(
+      isScreenWakeLockEnabled &&
+      ((isTransitioning && !!getCurrentTrack()) || (audio && !audio.paused && !audio.ended && !audio.error))
+    );
+  }
+
+  function releaseScreenWakeLock() {
+    screenWakeLockRequestId++;
+    const wakeLock = screenWakeLock;
+    screenWakeLock = null;
+
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+    }
+  }
+
+  function syncScreenWakeLock() {
+    if (!shouldHoldScreenWakeLock()) {
+      releaseScreenWakeLock();
+      return;
+    }
+
+    if (!navigator.wakeLock || typeof navigator.wakeLock.request !== 'function') return;
+    if (screenWakeLock && !screenWakeLock.released) return;
+    if (screenWakeLockRequest || document.visibilityState !== 'visible') return;
+
+    const requestId = ++screenWakeLockRequestId;
+    let request;
+    try {
+      request = navigator.wakeLock.request('screen');
+    } catch (error) {
+      return;
+    }
+    screenWakeLockRequest = request;
+
+    request.then(function(wakeLock) {
+      if (requestId !== screenWakeLockRequestId || !shouldHoldScreenWakeLock() || document.visibilityState !== 'visible') {
+        wakeLock.release().catch(() => {});
+        return;
+      }
+
+      screenWakeLock = wakeLock;
+      wakeLock.addEventListener('release', function() {
+        if (screenWakeLock === wakeLock) screenWakeLock = null;
+      });
+    }).catch(function() {
+      // Wake Lockの失敗は音楽再生に影響させない。
+    }).finally(function() {
+      if (screenWakeLockRequest === request) screenWakeLockRequest = null;
+      if (requestId !== screenWakeLockRequestId && shouldHoldScreenWakeLock()) {
+        syncScreenWakeLock();
+      }
+    });
   }
 
   function updateMusicTrackState() {
@@ -216,6 +285,7 @@
     $('.player').find('.player_play, .player_send').removeClass('pause disabled');
 
     const audio = ensureAudio();
+	syncScreenWakeLock();
 	$('.player').toggleClass(
 	  'active',
 	  !audio.paused || isTransitioning || keepActiveDuringTransition || (globalIsPlayingAll && !!getCurrentTrack())
@@ -480,6 +550,21 @@ function handleEnded() {
   function initPlayer() {
     const $player = $('.player');
     if (!$player.length) return;
+
+    $player.find('.player_wake_lock_toggle')
+      .prop('checked', isScreenWakeLockEnabled)
+      .off('change.tuougmWakeLock')
+      .on('change.tuougmWakeLock', function() {
+        isScreenWakeLockEnabled = $(this).prop('checked');
+
+        try {
+          localStorage.setItem(SCREEN_WAKE_LOCK_STORAGE_KEY, String(isScreenWakeLockEnabled));
+        } catch (error) {
+          // 保存できない環境でも、現在のページ内では設定を反映する。
+        }
+
+        syncScreenWakeLock();
+      });
 
     $player.on('change', '.player_album_options input[type="radio"]', function() {
       const albumId = String($(this).val() || '');
