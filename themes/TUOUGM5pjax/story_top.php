@@ -1,4 +1,21 @@
 <?php $is_english = 'en_US' === get_locale(); ?>
+<?php
+$members_url = '';
+$japanese_members_page = function_exists( 'bogo_get_page_by_path' )
+	? bogo_get_page_by_path( 'members', 'ja', 'page' )
+	: get_page_by_path( 'members' );
+if ( $japanese_members_page && 'publish' === get_post_status( $japanese_members_page ) ) {
+	$members_page = $japanese_members_page;
+	if ( $is_english ) {
+		$members_page = function_exists( 'bogo_get_post_translation' )
+			? bogo_get_post_translation( $japanese_members_page->ID, 'en_US' )
+			: null;
+	}
+	if ( $members_page && 'publish' === get_post_status( $members_page ) ) {
+		$members_url = get_permalink( $members_page );
+	}
+}
+?>
 <div class="wrap_st_main">
 <section class="sec_rena">
 <div class="rena_cnt_wrap">
@@ -13,9 +30,15 @@ THE ULTIMATE SIN OF UNBUILT GUNPLA MOUNTAINの歴史、Builder、ARCHE CITY、<b
 そしてこの世界の断片を少しずつ公開しています。
 <?php endif; ?></p>
 <ul class="list_rena_link">
-<li><a href="<?php echo get_bloginfo('url'); ?>/members"><?php if ( $is_english ) : ?>RE:NA's PHOTOBOOK is now available on the MEMBERS PAGE.<br>
+<li><?php if ( $members_url ) : ?>
+<a href="<?php echo esc_url( $members_url ); ?>"><?php if ( $is_english ) : ?>RE:NA's PHOTOBOOK is now available on the MEMBERS PAGE.<br>
 Register to unlock access.<?php else : ?>RE:NA の PHOTOBOOKが MEMBER PAGE で公開中<br>
-会員登録して権限を解放しよう<?php endif; ?></a></li>
+会員登録して権限を解放しよう<?php endif; ?></a>
+<?php else : ?>
+<span class="ft_nav_unavailable" aria-disabled="true"><?php if ( $is_english ) : ?>RE:NA's PHOTOBOOK is now available on the MEMBERS PAGE.<br>
+Register to unlock access.<?php else : ?>RE:NA の PHOTOBOOKが MEMBER PAGE で公開中<br>
+会員登録して権限を解放しよう<?php endif; ?></span>
+<?php endif; ?></li>
 <li><a href="https://www.instagram.com/recoveredentityneuralarchive/" target="_blank"><?php echo $is_english ? 'Follow RE:NA on her official Instagram.' : 'RE:NA の公式 INSTAGRAMはこちらから'; ?></a></li>
 </ul>
 </div>
