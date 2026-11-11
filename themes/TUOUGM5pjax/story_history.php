@@ -1,9 +1,9 @@
+<?php $is_english = 'en_US' === get_locale(); ?>
 <div class="wrap_st_main st_sub_wrap">
 <section class="st_single_top st_history_top">
 <p class="ttl_sub_rena">TIMELINE</p>
 <h2>HISTORY<span>THE ORIGIN OF TUOUGM</span></h2>
-<p>TUOUGMの結成から、Builderの目覚め、そしてGunpla City誕生まで。<br>
-復元された歴史記録を公開しています。</p>
+<p><?php echo esc_html( $is_english ? 'From the formation of TUOUGM to the awakening of the Builder and the birth of ARCHE CITY.' : 'TUOUGMの結成、Builderの覚醒、そしてARCHE CITYの誕生まで。' ); ?></p>
 </section>
 <?php
 /*
