@@ -8,7 +8,7 @@
 
 <?php if ( have_posts() ) : ?>
 <ul class="list_characters">
-<?php while (have_posts()) : the_post(); ?>
+<?php while (have_posts()) : the_post(); $post_id = get_the_ID(); ?>
 <li>
 <a href="<?php echo get_permalink(); ?>" class="flex_wrap">
 <?php if ( has_post_thumbnail($post_id) ): ?>

@@ -7,6 +7,7 @@ if ($era_terms && !is_wp_error($era_terms)) {
     $era = $era_terms[0]->name;
 }
 $year = get_post_meta(get_the_ID(), 'timeline_year', true);
+$subttl = '';
 if(get_field( 'subttl' )){
 	$subttl = get_field( 'subttl' );
 }
