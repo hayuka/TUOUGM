@@ -206,7 +206,7 @@ $era_name = $era_term
 <div class="st_meta_cnt">
 <h3><?php echo esc_html(get_the_title($post_id)); ?><span><?php echo esc_html(get_post_meta( $post_id, 'subttl', true )); ?></span></h3>
 <p><?php
-$content = get_post_field('post_content', $post_id);
+$content = strip_shortcodes( get_post_field('post_content', $post_id) );
 echo esc_html(wp_strip_all_tags($content));
 ?></p>
 </div>
