@@ -156,16 +156,7 @@ wp_head();
 <ul class="flex_wrap">
 <li><a href="<?php echo get_bloginfo('url'); ?>/about/">ABOUT</a></li>
 <li><a href="<?php echo esc_url( home_url( '/music/' ) ); ?>">MUSIC</a></li>
-<?php if ( is_home() || is_front_page() ) : ?>
-<!--<li><a href="#anc04">GOODS</a></li>-->
-<!--<li><a href="#anc03">MUSIC</a></li>-->
-<!--<li><a href="#anc02">VIDEO</a></li>-->
-<?php else : ?>
-<!--<li><a href="<?php echo get_bloginfo('url'); ?>/#anc04">GOODS</a></li>-->
-<!--<li><a href="<?php echo get_bloginfo('url'); ?>/#anc03">MUSIC</a></li>-->
 <li><a href="<?php echo get_bloginfo('url'); ?>/story/">STORY</a></li>
-<!--<li><a href="<?php echo get_bloginfo('url'); ?>/#anc02">VIDEO</a></li>-->
-<?php endif; ?>
 <li><a href="<?php echo get_bloginfo('url'); ?>/archives/">ARCHIVES</a></li>
 <li><a href="<?php echo get_bloginfo('url'); ?>/members/">MEMBERS</a></li>
 </ul>
