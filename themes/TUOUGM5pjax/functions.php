@@ -51,6 +51,23 @@ function bogo_use_flags_false(){
  return false;
 }
 
+/**
+ * Include STORY entries in Bogo's per-post language handling.
+ *
+ * @param array $post_types Bogo-localizable post types.
+ * @return array
+ */
+function tuougm_bogo_localizable_post_types( $post_types ) {
+    $post_types = (array) $post_types;
+
+    if ( ! in_array( 'story', $post_types, true ) ) {
+        $post_types[] = 'story';
+    }
+
+    return $post_types;
+}
+add_filter( 'bogo_localizable_post_types', 'tuougm_bogo_localizable_post_types' );
+
 add_filter('bogo_language_switcher_links', 'bogo_language_link_text_change');
 function bogo_language_link_text_change ($links) {
     foreach ($links as $key => $value) {
@@ -521,10 +538,26 @@ function tuougm_story_request_filter($query_vars) {
         return $query_vars;
     }
 
-    // /story/xxx/yyy/ の形式
+    // Support both /story/.../ and Bogo's /{language}/story/.../ routes.
     if (isset($_SERVER['REQUEST_URI'])) {
         $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
         $parts = explode('/', $uri);
+
+        $language_segment = '';
+        $language_slugs = function_exists('bogo_available_locales') && function_exists('bogo_lang_slug')
+            ? array_map('bogo_lang_slug', bogo_available_locales())
+            : array();
+
+        if (!empty($parts[0]) && in_array($parts[0], $language_slugs, true)) {
+            $language_segment = array_shift($parts);
+        }
+
+        $language_query = array();
+        if (!empty($query_vars['lang'])) {
+            $language_query['lang'] = $query_vars['lang'];
+        } elseif ($language_segment) {
+            $language_query['lang'] = $language_segment;
+        }
 
         if (count($parts) >= 2 && $parts[0] === 'story') {
             $slug = end($parts);
@@ -533,14 +566,20 @@ function tuougm_story_request_filter($query_vars) {
             $post = get_page_by_path($slug, OBJECT, 'story');
             if ($post) {
                 // 投稿として処理
-                return array('post_type' => 'story', 'name' => $slug);
+                return array_merge(
+                    $language_query,
+                    array('post_type' => 'story', 'name' => $slug)
+                );
             }
 
             // タームとして処理
             $term_slug = implode('/', array_slice($parts, 1));
             $term = get_term_by('slug', $slug, 'story_category');
             if ($term) {
-                return array('story_category' => $term_slug);
+                return array_merge(
+                    $language_query,
+                    array('story_category' => $term_slug)
+                );
             }
         }
     }

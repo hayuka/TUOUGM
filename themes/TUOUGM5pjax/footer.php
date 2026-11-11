@@ -8,9 +8,6 @@ if ( $is_english && function_exists( 'bogo_url' ) ) {
 }
 $footer_page_url = static function ( $path ) use ( $is_english ) {
 	$url = home_url( $path );
-	if ( '/story/' === $path ) {
-		return function_exists( 'bogo_url' ) ? bogo_url( $url, 'ja' ) : $url;
-	}
 	return function_exists( 'bogo_url' )
 		? bogo_url( $url, $is_english ? 'en_US' : 'ja' )
 		: $url;
