@@ -3593,11 +3593,16 @@ input:-webkit-autofill:focus {
 	font-size: 18px;
 }
 .tuougm-track-trigger__icon{
+	flex: 0 0 30px;
 	width: 30px;
 	line-height: 30px;
 	border-radius: 100vh;
 	background: #e43a2b;
 	color: #fff;
+}
+.tuougm-track-trigger__title{
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 .tuougm-track-trigger:hover{
 	opacity: .5;
