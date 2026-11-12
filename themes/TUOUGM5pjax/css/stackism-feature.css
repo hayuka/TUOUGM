@@ -1,0 +1,26 @@
+
+/* STACKISM medley — top-page featured video */
+.stackism_feature{background:#050505;padding:54px 0 44px;color:#fff}
+.stackism_feature_inner{width:90%;max-width:1200px;margin-inline:auto}
+.stackism_feature_panel{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:0;border:1px solid #595959;background:linear-gradient(130deg,#17191b,#08090b);box-shadow:0 0 0 5px #0b0b0b,0 0 0 6px #333}
+.stackism_feature_visual{position:relative;aspect-ratio:16/9;background:#0d0b14;overflow:hidden}
+.stackism_feature_visual iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.stackism_feature_poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.stackism_feature_visual.is-ready .stackism_feature_poster{opacity:0}
+.stackism_feature_open{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:#fff;cursor:pointer}
+.stackism_feature_play_icon{display:grid;place-items:center;width:76px;height:76px;border:2px solid #fff;border-radius:50%;background:rgba(0,0,0,.56);font-size:30px;transition:transform .2s,background .2s}
+.stackism_feature_open:hover .stackism_feature_play_icon{transform:scale(1.1);background:rgba(156,20,20,.8)}
+.stackism_feature_copy{padding:clamp(24px,4vw,48px);display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.stackism_feature_eyebrow{display:inline-block;padding:5px 13px;background:#a91c1c;font-weight:800;font-size:12px;letter-spacing:.1em}
+.stackism_feature_title{font-family:Saira,Arial,sans-serif;font-weight:900;line-height:1.04;font-size:clamp(28px,3.4vw,48px);margin:18px 0}
+.stackism_feature_desc{font-size:14px;line-height:1.9;color:#ddd;margin:0 0 24px}
+.stackism_feature_watch{border:1px solid #a91c1c;background:#090909;color:#fff;padding:12px 25px;font-weight:800;cursor:pointer}
+.stackism_feature_watch:hover{background:#a91c1c}
+.stackism_video_modal[hidden]{display:none}
+.stackism_video_modal{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:30px;background:rgba(0,0,0,.92)}
+.stackism_video_dialog{position:relative;width:min(100%,1000px);background:#000}
+.stackism_video_frame{aspect-ratio:16/9}
+.stackism_video_frame iframe{width:100%;height:100%;border:0}
+.stackism_video_close{position:absolute;right:0;bottom:calc(100% + 10px);background:transparent;border:0;color:#fff;font-size:36px;cursor:pointer}
+body.stackism_video_open{overflow:hidden}
+@media(max-width:767px){.stackism_feature{padding:36px 0}.stackism_feature_panel{grid-template-columns:1fr}.stackism_feature_copy{padding:24px}.stackism_feature_title{font-size:32px}.stackism_feature_play_icon{width:62px;height:62px}.stackism_video_modal{padding:16px}}
