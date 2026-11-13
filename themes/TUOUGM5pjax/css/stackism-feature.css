@@ -29,4 +29,5 @@
 .stackism_video_fallback[hidden],.stackism_video_retry[hidden]{display:none!important}
 .stackism_sr_only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 body.stackism_video_open{overflow:hidden}
+@media(min-width:768px) and (max-width:1000px){.stackism_feature_visual{aspect-ratio:auto}}
 @media(max-width:767px){.stackism_feature{padding:36px 0}.stackism_feature_panel{grid-template-columns:1fr}.stackism_feature_copy{padding:24px}.stackism_feature_title{font-size:32px}.stackism_feature_play_icon{width:62px;height:62px}.stackism_video_modal{padding:16px}}

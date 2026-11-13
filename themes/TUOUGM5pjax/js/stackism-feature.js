@@ -104,8 +104,20 @@
     state.video.volume = 0;
     const playback = state.video.play();
     if (playback && typeof playback.catch === 'function') {
-      playback.catch(function() {
+      playback.catch(function(error) {
         if (!isCurrentState(state)) return;
+
+        // play() can be rejected when pause(), modal opening, or a visibility
+        // transition interrupts a pending request. Those state changes already
+        // have their own resume hooks; only the media `error` event marks the
+        // source/decode as failed and switches permanently to the poster.
+        const canPlayPreview = state.previewVisible && !state.modalOpen && document.visibilityState !== 'hidden';
+        const wasInterrupted = error && error.name === 'AbortError';
+        if (wasInterrupted || !canPlayPreview) return;
+
+        // A rejected play promise alone does not prove a media failure. Only
+        // the media element's source/decode error should switch to the poster.
+        if (!state.video.error) return;
         state.previewFailed = true;
         state.visual.classList.remove('is-ready');
       });
