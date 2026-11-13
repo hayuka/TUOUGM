@@ -23,6 +23,42 @@ if($loc){
 </div>
 </div>
 
+<section class="stackism_feature" aria-labelledby="stackism-feature-title">
+<div class="stackism_feature_inner">
+<div class="stackism_feature_panel">
+<div class="stackism_feature_visual" data-stackism-visual>
+<div class="stackism_feature_preview" data-stackism-preview aria-hidden="true"></div>
+<img class="stackism_feature_poster" src="https://i.ytimg.com/vi/ar8pi5OeDuY/hqdefault.jpg" alt="" loading="lazy" decoding="async">
+<button class="stackism_feature_open" type="button" data-stackism-open aria-haspopup="dialog" aria-label="Watch STACKISM EP MEDLEY">
+<span class="stackism_feature_play_icon" aria-hidden="true">&#9654;</span>
+</button>
+</div>
+<div class="stackism_feature_copy">
+<span class="stackism_feature_eyebrow">NEW VIDEO</span>
+<h2 class="stackism_feature_title" id="stackism-feature-title">STACKISM EP MEDLEY</h2>
+<?php if ( 'en_US' === $locale ) : ?>
+<p class="stackism_feature_desc">To build or to stack. That is the question.<br>A medley video for builders obsessed with their ever-growing Gunpla stacks.</p>
+<?php else : ?>
+<p class="stackism_feature_desc">積むか、作るか。それが問題だ。<br>積みプラに取り憑かれたビルダーたちへ贈る、STACKISMのメドレー映像。</p>
+<?php endif; ?>
+<button class="stackism_feature_watch" type="button" data-stackism-open aria-haspopup="dialog">WATCH NOW</button>
+</div>
+</div>
+</div>
+<div class="stackism_video_modal" data-stackism-modal hidden aria-hidden="true">
+<div class="stackism_video_dialog" role="dialog" aria-modal="true" aria-labelledby="stackism-video-title" tabindex="-1">
+<button class="stackism_video_close" type="button" data-stackism-close aria-label="Close video">&times;</button>
+<h2 class="stackism_sr_only" id="stackism-video-title">STACKISM EP MEDLEY</h2>
+<div class="stackism_video_frame"><div data-stackism-modal-player></div></div>
+<div class="stackism_video_fallback" data-stackism-fallback hidden>
+<p data-stackism-fallback-message>Video playback is unavailable here.</p>
+<button class="stackism_video_retry" type="button" data-stackism-retry hidden>PLAY VIDEO</button>
+<a class="stackism_video_youtube" href="https://www.youtube.com/watch?v=ar8pi5OeDuY" target="_blank" rel="noopener noreferrer">Watch on YouTube</a>
+</div>
+</div>
+</div>
+</section>
+
 <div class="cta">
 <div class="inner_cta">
 <?php if ('en_US' == $locale){ ?>

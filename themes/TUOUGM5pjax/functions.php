@@ -1131,6 +1131,14 @@ function tuougm_enqueue_frontend_assets() {
     wp_enqueue_style( 'tuougm-module', $uri . '/css/module.css', array( 'tuougm-modaal' ), $version( '/css/module.css' ) );
     wp_enqueue_style( 'tuougm-style', $uri . '/css/style.css', array( 'tuougm-module' ), $version( '/css/style.css' ) );
 
+    if ( is_front_page() ) {
+        wp_enqueue_style( 'tuougm-stackism-feature', $uri . '/css/stackism-feature.css', array( 'tuougm-style' ), $version( '/css/stackism-feature.css' ) );
+        wp_enqueue_script( 'tuougm-stackism-feature', $uri . '/js/stackism-feature.js', array( 'jquery', 'tuougm-pjax' ), $version( '/js/stackism-feature.js' ), true );
+        wp_localize_script( 'tuougm-stackism-feature', 'tuougmStackismConfig', array(
+            'videoId' => 'ar8pi5OeDuY',
+        ) );
+    }
+
     wp_enqueue_script( 'jquery' );
     wp_enqueue_script( 'tuougm-modaal', $uri . '/vendor/modaal/0.4.4/modaal.min.js', array( 'jquery' ), '0.4.4', true );
     wp_enqueue_script( 'tuougm-swup', $uri . '/vendor/swup/4.10.0/Swup.umd.js', array(), '4.10.0', true );

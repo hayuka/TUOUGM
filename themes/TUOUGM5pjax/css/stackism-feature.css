@@ -5,9 +5,11 @@
 .stackism_feature_panel{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:0;border:1px solid #595959;background:linear-gradient(130deg,#17191b,#08090b);box-shadow:0 0 0 5px #0b0b0b,0 0 0 6px #333}
 .stackism_feature_visual{position:relative;aspect-ratio:16/9;background:#0d0b14;overflow:hidden}
 .stackism_feature_visual iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.stackism_feature_preview{position:absolute;inset:0}
 .stackism_feature_poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .stackism_feature_visual.is-ready .stackism_feature_poster{opacity:0}
 .stackism_feature_open{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:#fff;cursor:pointer}
+.stackism_feature_open:focus-visible,.stackism_feature_watch:focus-visible,.stackism_video_close:focus-visible,.stackism_video_retry:focus-visible,.stackism_video_youtube:focus-visible{outline:2px solid #fff;outline-offset:4px}
 .stackism_feature_play_icon{display:grid;place-items:center;width:76px;height:76px;border:2px solid #fff;border-radius:50%;background:rgba(0,0,0,.56);font-size:30px;transition:transform .2s,background .2s}
 .stackism_feature_open:hover .stackism_feature_play_icon{transform:scale(1.1);background:rgba(156,20,20,.8)}
 .stackism_feature_copy{padding:clamp(24px,4vw,48px);display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
@@ -19,8 +21,13 @@
 .stackism_video_modal[hidden]{display:none}
 .stackism_video_modal{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:30px;background:rgba(0,0,0,.92)}
 .stackism_video_dialog{position:relative;width:min(100%,1000px);background:#000}
-.stackism_video_frame{aspect-ratio:16/9}
-.stackism_video_frame iframe{width:100%;height:100%;border:0}
+.stackism_video_frame{position:relative;aspect-ratio:16/9}
+.stackism_video_frame>div,.stackism_video_frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .stackism_video_close{position:absolute;right:0;bottom:calc(100% + 10px);background:transparent;border:0;color:#fff;font-size:36px;cursor:pointer}
+.stackism_video_fallback{padding:14px 18px;background:#17191b;color:#fff;text-align:center}
+.stackism_video_retry{margin:0 12px;padding:9px 16px;border:1px solid #a91c1c;background:#090909;color:#fff;font-weight:800;cursor:pointer}
+.stackism_video_youtube{color:#fff;text-decoration:underline}
+.stackism_video_fallback[hidden],.stackism_video_retry[hidden]{display:none!important}
+.stackism_sr_only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 body.stackism_video_open{overflow:hidden}
 @media(max-width:767px){.stackism_feature{padding:36px 0}.stackism_feature_panel{grid-template-columns:1fr}.stackism_feature_copy{padding:24px}.stackism_feature_title{font-size:32px}.stackism_feature_play_icon{width:62px;height:62px}.stackism_video_modal{padding:16px}}
