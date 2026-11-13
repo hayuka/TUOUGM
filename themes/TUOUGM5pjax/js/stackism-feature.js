@@ -15,9 +15,21 @@
     youtubeApiPromise = new Promise(function(resolve, reject) {
       const previousCallback = window.onYouTubeIframeAPIReady;
       let settled = false;
+      let loadTimeout = null;
       let script = document.getElementById('youtube-iframe-api');
+      const rejectLoad = function() {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(loadTimeout);
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        if (window.onYouTubeIframeAPIReady === handleApiReady) {
+          window.onYouTubeIframeAPIReady = previousCallback || null;
+        }
+        youtubeApiPromise = null;
+        reject(new Error('YouTube IFrame API could not be loaded.'));
+      };
 
-      window.onYouTubeIframeAPIReady = function() {
+      const handleApiReady = function() {
         if (typeof previousCallback === 'function') {
           try {
             previousCallback();
@@ -27,22 +39,24 @@
         }
         if (window.YT && typeof window.YT.Player === 'function' && !settled) {
           settled = true;
+          window.clearTimeout(loadTimeout);
+          if (window.onYouTubeIframeAPIReady === handleApiReady) {
+            window.onYouTubeIframeAPIReady = previousCallback || null;
+          }
           resolve(window.YT);
         }
       };
+      window.onYouTubeIframeAPIReady = handleApiReady;
 
       if (!script) {
         script = document.createElement('script');
         script.id = 'youtube-iframe-api';
         script.src = 'https://www.youtube.com/iframe_api';
         script.async = true;
-        script.onerror = function() {
-          if (settled) return;
-          settled = true;
-          reject(new Error('YouTube IFrame API could not be loaded.'));
-        };
-        document.head.appendChild(script);
       }
+      script.addEventListener('error', rejectLoad, { once: true });
+      if (!script.isConnected) document.head.appendChild(script);
+      loadTimeout = window.setTimeout(rejectLoad, 15000);
     });
 
     return youtubeApiPromise;
@@ -68,6 +82,10 @@
     return currentState === state && !state.destroyed && state.root.isConnected;
   }
 
+  function isCurrentModalSession(state, generation) {
+    return isCurrentState(state) && state.modalOpen && state.modalGeneration === generation;
+  }
+
   function startPreview(state) {
     if (!isCurrentState(state) || state.previewPlayer || state.previewInitializing || !videoId) return;
     state.previewInitializing = true;
@@ -81,6 +99,7 @@
           controls: 0,
           disablekb: 1,
           enablejsapi: 1,
+          cc_load_policy: 0,
           loop: 1,
           modestbranding: 1,
           playsinline: 1,
@@ -126,7 +145,7 @@
   }
 
   function resumePreview(state) {
-    if (!isCurrentState(state) || state.modalOpen || !state.previewVisible) return;
+    if (!isCurrentState(state) || state.modalOpen || !state.previewVisible || document.visibilityState === 'hidden') return;
     if (state.previewPlayer) {
       state.previewPlayer.mute();
       state.previewPlayer.setVolume(0);
@@ -148,6 +167,7 @@
   function openModal(state, trigger) {
     if (!isCurrentState(state) || state.modalOpen) return;
     state.modalOpen = true;
+    const modalGeneration = ++state.modalGeneration;
     state.returnFocus = trigger || document.activeElement;
     pausePreview(state);
     pauseSiteMusic();
@@ -158,7 +178,7 @@
     state.closeButton.focus();
 
     loadYoutubeApi().then(function(YT) {
-      if (!isCurrentState(state) || !state.modalOpen || state.modalPlayer) return;
+      if (!isCurrentModalSession(state, modalGeneration) || state.modalPlayer) return;
       state.fallback.hidden = true;
       state.modalPlayer = new YT.Player(state.modalTarget, {
         videoId: videoId,
@@ -171,7 +191,7 @@
         },
         events: {
           onReady: function(event) {
-            if (!isCurrentState(state) || !state.modalOpen) {
+            if (!isCurrentModalSession(state, modalGeneration)) {
               safePlayerCall(event.target, 'destroy');
               return;
             }
@@ -182,18 +202,21 @@
             event.target.playVideo();
           },
           onStateChange: function(event) {
+            if (!isCurrentModalSession(state, modalGeneration)) return;
             if (event.data === YT.PlayerState.PLAYING) state.fallback.hidden = true;
           },
           onAutoplayBlocked: function() {
+            if (!isCurrentModalSession(state, modalGeneration)) return;
             showFallback(state, 'Playback was blocked. Press PLAY VIDEO to start with sound.', true);
           },
           onError: function() {
+            if (!isCurrentModalSession(state, modalGeneration)) return;
             showFallback(state, 'Video playback is unavailable here.', false);
           }
         }
       });
     }).catch(function() {
-      if (isCurrentState(state) && state.modalOpen) {
+      if (isCurrentModalSession(state, modalGeneration)) {
         showFallback(state, 'Video playback is unavailable here.', false);
       }
     });
@@ -202,6 +225,7 @@
   function closeModal(state, restoreFocus) {
     if (!state || !state.modalOpen) return;
     state.modalOpen = false;
+    state.modalGeneration++;
     safePlayerCall(state.modalPlayer, 'stopVideo');
     safePlayerCall(state.modalPlayer, 'destroy');
     state.modalPlayer = null;
@@ -246,7 +270,11 @@
     const state = currentState;
     if (!state) return;
     state.destroyed = true;
+    state.modalGeneration++;
     if (state.observer) state.observer.disconnect();
+    document.removeEventListener('keydown', state.onKeydown);
+    document.removeEventListener('visibilitychange', state.onVisibilityChange);
+    state.root.removeEventListener('click', state.onClick);
     pausePreview(state);
     safePlayerCall(state.previewPlayer, 'destroy');
     state.previewPlayer = null;
@@ -282,6 +310,7 @@
       previewInitializing: false,
       previewVisible: false,
       modalOpen: false,
+      modalGeneration: 0,
       returnFocus: null,
       observer: null,
       destroyed: false
@@ -317,8 +346,13 @@
       }
       trapModalFocus(state, event);
     };
+    state.onVisibilityChange = function() {
+      if (document.visibilityState === 'hidden') pausePreview(state);
+      else resumePreview(state);
+    };
     state.root.addEventListener('click', state.onClick);
     document.addEventListener('keydown', state.onKeydown);
+    document.addEventListener('visibilitychange', state.onVisibilityChange);
 
     if ('IntersectionObserver' in window) {
       state.observer = new IntersectionObserver(function(entries) {
