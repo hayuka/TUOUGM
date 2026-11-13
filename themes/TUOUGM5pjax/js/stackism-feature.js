@@ -87,76 +87,38 @@
   }
 
   function startPreview(state) {
-    if (!isCurrentState(state) || state.previewPlayer || state.previewInitializing || !videoId) return;
-    state.previewInitializing = true;
+    if (!isCurrentState(state) || !state.previewVisible || state.modalOpen || state.previewFailed || document.visibilityState === 'hidden') return;
 
-    loadYoutubeApi().then(function(YT) {
-      if (!isCurrentState(state)) return;
-      state.previewPlayer = new YT.Player(state.previewTarget, {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          disablekb: 1,
-          enablejsapi: 1,
-          cc_load_policy: 0,
-          loop: 1,
-          modestbranding: 1,
-          playsinline: 1,
-          playlist: videoId,
-          rel: 0
-        },
-        events: {
-          onReady: function(event) {
-            if (!isCurrentState(state)) {
-              safePlayerCall(event.target, 'destroy');
-              return;
-            }
-            event.target.mute();
-            event.target.setVolume(0);
-            if (state.previewVisible && !state.modalOpen) event.target.playVideo();
-          },
-          onStateChange: function(event) {
-            if (!isCurrentState(state)) return;
-            if (event.data === YT.PlayerState.PLAYING) {
-              state.visual.classList.add('is-ready');
-            } else if (event.data === YT.PlayerState.ENDED && state.previewVisible && !state.modalOpen) {
-              event.target.playVideo();
-            }
-          },
-          onError: function() {
-            if (!isCurrentState(state)) return;
-            state.visual.classList.remove('is-ready');
-            safePlayerCall(state.previewPlayer, 'destroy');
-            state.previewPlayer = null;
-          },
-          onAutoplayBlocked: function() {
-            if (!isCurrentState(state)) return;
-            state.visual.classList.remove('is-ready');
-            safePlayerCall(state.previewPlayer, 'pauseVideo');
-          }
-        }
+    if (!state.previewLoaded) {
+      const sourceUrl = state.videoSource.dataset.src;
+      if (!sourceUrl) {
+        state.previewFailed = true;
+        return;
+      }
+      state.videoSource.src = sourceUrl;
+      state.previewLoaded = true;
+      state.video.load();
+    }
+
+    state.video.muted = true;
+    state.video.volume = 0;
+    const playback = state.video.play();
+    if (playback && typeof playback.catch === 'function') {
+      playback.catch(function() {
+        if (!isCurrentState(state)) return;
+        state.previewFailed = true;
+        state.visual.classList.remove('is-ready');
       });
-    }).catch(function() {
-      if (isCurrentState(state)) state.visual.classList.remove('is-ready');
-    }).finally(function() {
-      state.previewInitializing = false;
-    });
+    }
   }
 
   function resumePreview(state) {
     if (!isCurrentState(state) || state.modalOpen || !state.previewVisible || document.visibilityState === 'hidden') return;
-    if (state.previewPlayer) {
-      state.previewPlayer.mute();
-      state.previewPlayer.setVolume(0);
-      state.previewPlayer.playVideo();
-      return;
-    }
     startPreview(state);
   }
 
   function pausePreview(state) {
-    if (state && state.previewPlayer) safePlayerCall(state.previewPlayer, 'pauseVideo');
+    if (state && state.video && !state.video.paused) state.video.pause();
   }
 
   function pauseSiteMusic() {
@@ -276,8 +238,11 @@
     document.removeEventListener('visibilitychange', state.onVisibilityChange);
     state.root.removeEventListener('click', state.onClick);
     pausePreview(state);
-    safePlayerCall(state.previewPlayer, 'destroy');
-    state.previewPlayer = null;
+    state.video.removeEventListener('playing', state.onPreviewPlaying);
+    state.video.removeEventListener('error', state.onPreviewError);
+    state.video.removeAttribute('src');
+    state.videoSource.removeAttribute('src');
+    state.video.load();
     safePlayerCall(state.modalPlayer, 'stopVideo');
     safePlayerCall(state.modalPlayer, 'destroy');
     state.modalPlayer = null;
@@ -297,7 +262,8 @@
     const state = {
       root: root,
       visual: root.querySelector('[data-stackism-visual]'),
-      previewTarget: root.querySelector('[data-stackism-preview]'),
+      video: root.querySelector('[data-stackism-video]'),
+      videoSource: root.querySelector('[data-stackism-video-source]'),
       modal: root.querySelector('[data-stackism-modal]'),
       dialog: root.querySelector('.stackism_video_dialog'),
       modalTarget: root.querySelector('[data-stackism-modal-player]'),
@@ -305,9 +271,9 @@
       fallbackMessage: root.querySelector('[data-stackism-fallback-message]'),
       retryButton: root.querySelector('[data-stackism-retry]'),
       closeButton: root.querySelector('[data-stackism-close]'),
-      previewPlayer: null,
       modalPlayer: null,
-      previewInitializing: false,
+      previewLoaded: false,
+      previewFailed: false,
       previewVisible: false,
       modalOpen: false,
       modalGeneration: 0,
@@ -316,8 +282,19 @@
       destroyed: false
     };
 
-    if (!state.visual || !state.previewTarget || !state.modal || !state.dialog || !state.modalTarget || !state.closeButton) return;
+    if (!state.visual || !state.video || !state.videoSource || !state.modal || !state.dialog || !state.modalTarget || !state.closeButton) return;
     currentState = state;
+
+    state.onPreviewPlaying = function() {
+      if (isCurrentState(state)) state.visual.classList.add('is-ready');
+    };
+    state.onPreviewError = function() {
+      if (!isCurrentState(state)) return;
+      state.previewFailed = true;
+      state.visual.classList.remove('is-ready');
+    };
+    state.video.addEventListener('playing', state.onPreviewPlaying);
+    state.video.addEventListener('error', state.onPreviewError);
 
     state.onClick = function(event) {
       const openButton = event.target.closest('[data-stackism-open]');
@@ -362,7 +339,7 @@
           if (entry.isIntersecting) resumePreview(state);
           else pausePreview(state);
         });
-      }, { rootMargin: '300px 0px' });
+      }, { rootMargin: '0px' });
       state.observer.observe(state.visual);
     } else {
       state.previewVisible = true;

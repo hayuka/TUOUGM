@@ -27,7 +27,9 @@ if($loc){
 <div class="stackism_feature_inner">
 <div class="stackism_feature_panel">
 <div class="stackism_feature_visual" data-stackism-visual>
-<div class="stackism_feature_preview" data-stackism-preview aria-hidden="true"></div>
+<video class="stackism_feature_video" data-stackism-video autoplay muted loop playsinline preload="none" poster="https://i.ytimg.com/vi/ar8pi5OeDuY/hqdefault.jpg" aria-hidden="true">
+<source data-stackism-video-source data-src="<?php echo esc_url( get_template_directory_uri() . '/img/tuougm-stackism-medley.mp4' ); ?>" type="video/mp4">
+</video>
 <img class="stackism_feature_poster" src="https://i.ytimg.com/vi/ar8pi5OeDuY/hqdefault.jpg" alt="" loading="lazy" decoding="async">
 <button class="stackism_feature_open" type="button" data-stackism-open aria-haspopup="dialog" aria-label="Watch STACKISM EP MEDLEY">
 <span class="stackism_feature_play_icon" aria-hidden="true">&#9654;</span>
