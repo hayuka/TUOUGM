@@ -190,6 +190,38 @@ We’re still making noise from the mountain of unbuilt kits.</p>
 </section>
 
 <?php
+$is_history_english = 'en_US' === $locale;
+$history_url = function_exists( 'bogo_url' )
+    ? bogo_url( home_url( '/story/history/' ), $is_history_english ? 'en_US' : 'ja' )
+    : home_url( '/story/history/' );
+?>
+<section class="def_sec home_history" aria-labelledby="home-history-title">
+<div class="home_history_inner">
+<div class="home_history_layout">
+<div class="home_history_copy">
+<h2 id="home-history-title">HISTORY</h2>
+<p class="home_history_subtitle">THE CHRONICLES OF TUOUGM</p>
+<?php if ( $is_history_english ) : ?>
+<p>We started out making songs about Gunpla. Then came albums, music videos, and eventually, an actual licensing request to Bandai.</p>
+<p>A chronicle of TUOUGM's questionable decisions.</p>
+<?php else : ?>
+<p>ガンプラの曲を作り始めたはずが、アルバムを出し、MVを作り、ついにはバンダイへ申請書まで送ってしまった。</p>
+<p>TUOUGMの「やらかし」の記録。</p>
+<?php endif; ?>
+<p class="btn home_history_link"><a href="<?php echo esc_url( $history_url ); ?>">VIEW HISTORY</a></p>
+</div>
+<div class="home_history_media">
+<figure class="home_history_visual">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/history-main-visual.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'A distressed archival-style image of the BANDAI planet and its city.' : 'バンダイの星と都市を写した、古い記録写真風のビジュアル' ); ?>" width="1448" height="1086" loading="lazy" decoding="async">
+</figure>
+<figure class="home_history_timeline">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/history-timeline.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM timeline: S.E.000 ORIGIN, S.E.001 1ST ALBUM, and S.E.002 THE BANDAI REQUEST.' : 'TUOUGMの年表：S.E.000 ORIGIN、S.E.001 1ST ALBUM、S.E.002 THE BANDAI REQUEST' ); ?>" width="2172" height="724" loading="lazy" decoding="async">
+</figure>
+</div>
+</div>
+</section>
+
+<?php
 $query = new WP_Query([
 	'post_type'      => 'post',
 	'posts_per_page' => 3,
