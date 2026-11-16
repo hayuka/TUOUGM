@@ -190,6 +190,36 @@ We’re still making noise from the mountain of unbuilt kits.</p>
 </section>
 
 <?php
+$is_history_english = 'en_US' === $locale;
+$history_url = function_exists( 'bogo_url' )
+    ? bogo_url( home_url( '/story/history/' ), $is_history_english ? 'en_US' : 'ja' )
+    : home_url( '/story/history/' );
+?>
+<section class="def_sec home_history" aria-labelledby="home-history-title">
+<div class="home_history_inner">
+<h2 class="home_history_sr_only" id="home-history-title">HISTORY</h2>
+<div class="home_history_lead">
+<figure class="home_history_visual">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/tuougm-history-visual.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM HISTORY artwork showing a BANDAI-marked planet above a futuristic city.' : '宇宙に浮かぶBANDAIの星と都市を描いたTUOUGMのHISTORYビジュアル' ); ?>" width="1774" height="510" loading="lazy" decoding="async">
+</figure>
+<div class="home_history_copy">
+<?php if ( $is_history_english ) : ?>
+<p>We started out making songs about Gunpla. Then came albums, music videos, and eventually, an actual licensing request to Bandai.</p>
+<p>A chronicle of TUOUGM's questionable decisions.</p>
+<?php else : ?>
+<p>ガンプラの曲を作り始めたはずが、アルバムを出し、MVを作り、ついにはバンダイへ申請書まで送ってしまった。</p>
+<p>TUOUGMの「やらかし」の記録。</p>
+<?php endif; ?>
+<p class="btn home_history_link"><a href="<?php echo esc_url( $history_url ); ?>">VIEW HISTORY</a></p>
+</div>
+</div>
+<figure class="home_history_timeline">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/tuougm-history-timeline.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM timeline: ORIGIN, 1ST ALBUM, and THE BANDAI REQUEST.' : 'ORIGIN（すべての始まり）、1ST ALBUM（1stアルバム発表）、THE BANDAI REQUEST（バンダイへの申請）を示すTUOUGMのタイムライン' ); ?>" width="1774" height="377" loading="lazy" decoding="async">
+</figure>
+</div>
+</section>
+
+<?php
 $query = new WP_Query([
 	'post_type'      => 'post',
 	'posts_per_page' => 3,
