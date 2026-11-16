@@ -197,12 +197,10 @@ $history_url = function_exists( 'bogo_url' )
 ?>
 <section class="def_sec home_history" aria-labelledby="home-history-title">
 <div class="home_history_inner">
-<h2 class="home_history_sr_only" id="home-history-title">HISTORY</h2>
-<div class="home_history_lead">
-<figure class="home_history_visual">
-<img src="<?php echo esc_url( get_template_directory_uri() . '/img/tuougm-history-visual.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM HISTORY artwork showing a BANDAI-marked planet above a futuristic city.' : '宇宙に浮かぶBANDAIの星と都市を描いたTUOUGMのHISTORYビジュアル' ); ?>" width="1774" height="510" loading="lazy" decoding="async">
-</figure>
+<div class="home_history_layout">
 <div class="home_history_copy">
+<h2 id="home-history-title">HISTORY</h2>
+<p class="home_history_subtitle">THE CHRONICLES OF TUOUGM</p>
 <?php if ( $is_history_english ) : ?>
 <p>We started out making songs about Gunpla. Then came albums, music videos, and eventually, an actual licensing request to Bandai.</p>
 <p>A chronicle of TUOUGM's questionable decisions.</p>
@@ -212,10 +210,14 @@ $history_url = function_exists( 'bogo_url' )
 <?php endif; ?>
 <p class="btn home_history_link"><a href="<?php echo esc_url( $history_url ); ?>">VIEW HISTORY</a></p>
 </div>
-</div>
-<figure class="home_history_timeline">
-<img src="<?php echo esc_url( get_template_directory_uri() . '/img/tuougm-history-timeline.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM timeline: ORIGIN, 1ST ALBUM, and THE BANDAI REQUEST.' : 'ORIGIN（すべての始まり）、1ST ALBUM（1stアルバム発表）、THE BANDAI REQUEST（バンダイへの申請）を示すTUOUGMのタイムライン' ); ?>" width="1774" height="377" loading="lazy" decoding="async">
+<div class="home_history_media">
+<figure class="home_history_visual">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/history-main-visual.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'A distressed archival-style image of the BANDAI planet and its city.' : 'バンダイの星と都市を写した、古い記録写真風のビジュアル' ); ?>" width="1448" height="1086" loading="lazy" decoding="async">
 </figure>
+<figure class="home_history_timeline">
+<img src="<?php echo esc_url( get_template_directory_uri() . '/img/history-timeline.png' ); ?>" alt="<?php echo esc_attr( $is_history_english ? 'TUOUGM timeline: S.E.000 ORIGIN, S.E.001 1ST ALBUM, and S.E.002 THE BANDAI REQUEST.' : 'TUOUGMの年表：S.E.000 ORIGIN、S.E.001 1ST ALBUM、S.E.002 THE BANDAI REQUEST' ); ?>" width="2172" height="724" loading="lazy" decoding="async">
+</figure>
+</div>
 </div>
 </section>
 
