@@ -4,6 +4,93 @@
  common.js
 	
 ------------------------------------------------------------------ */
+var membersBootTimers = [];
+var membersBootSequence = 0;
+var membersAccordionRoot = null;
+var membersAccordionMode = null;
+
+function initMembersAccordion() {
+	var root = document.querySelector('.member_inner');
+	var $headers = $('.m_cnt_header');
+	var $bodies = $('.m_cnt_body');
+	var accordionEnabled = $(window).width() <= 1170;
+
+	if (root !== membersAccordionRoot) {
+		membersAccordionRoot = root;
+		membersAccordionMode = null;
+	}
+
+	if (!$headers.length || !$bodies.length) {
+		membersAccordionMode = null;
+		return;
+	}
+
+	if (!accordionEnabled) {
+		$headers.off('click.tuougmAccordion').removeClass('active');
+		$bodies.stop(true, true).show();
+		membersAccordionMode = false;
+		return;
+	}
+
+	if (membersAccordionMode === true) {
+		return;
+	}
+
+	$bodies.hide();
+	$headers.removeClass('active');
+	$headers.first().addClass('active');
+	$bodies.first().show();
+	$headers.off('click.tuougmAccordion').on('click.tuougmAccordion', function() {
+		var $header = $(this);
+		if ($header.hasClass('active')) {
+			return;
+		}
+
+		var $body = $header.next('.m_cnt_body');
+		$headers.filter('.active').removeClass('active');
+		$bodies.filter(':visible').stop().slideUp(300);
+		$header.addClass('active');
+		$body.stop().slideDown(300, function() {
+			$('html, body').animate({
+				scrollTop: $header.offset().top - 120
+			}, 300);
+		});
+	});
+	membersAccordionMode = true;
+}
+
+window.tuougmInitMembersPage = function() {
+	// Cancel any pending sequence before looking for the current page's elements.
+	membersBootSequence++;
+	membersBootTimers.forEach(function(timer) {
+		window.clearTimeout(timer);
+	});
+	membersBootTimers = [];
+
+	var root = document.querySelector('.member_inner');
+	var status = root ? root.querySelector('.boot-screen .status') : null;
+	var passWrap = root ? root.querySelector('.pass-wrap') : null;
+	var boot = root ? root.querySelector('.boot-screen') : null;
+
+	if (status && passWrap && boot) {
+		var sequence = membersBootSequence;
+		membersBootTimers.push(window.setTimeout(function() {
+			if (sequence === membersBootSequence && root.isConnected && status.isConnected) {
+				status.textContent = 'AUTHORIZATION PORT OPEN';
+			}
+		}, 500));
+
+		membersBootTimers.push(window.setTimeout(function() {
+			if (sequence === membersBootSequence && root.isConnected && boot.isConnected && passWrap.isConnected) {
+				boot.style.display = 'none';
+				passWrap.style.display = 'block';
+			}
+		}, 1000));
+	}
+
+	initMembersAccordion();
+};
+
 $(function() {
 	$(window).scroll(function () {
 		if ($(this).scrollTop() > 10) {			
@@ -94,6 +181,7 @@ function updateProgress() {
 }
 $(document).ready(function(){
 	window.tuougmInitPage();
+	window.tuougmInitMembersPage();
 });
 $(function() {
 //	parallaxImg();
@@ -101,58 +189,11 @@ $(function() {
 });
 
 $(function () {
-	let isAccordion = false;
-	function enableAccordion() {
-		isAccordion = true;
-		$('.m_cnt_body').hide();
-		$('.m_cnt_header').removeClass('active');
-		$('.m_cnt_header').first().addClass('active');
-		$('.m_cnt_body').first().show();
-		$('.m_cnt_header')
-			.off('click.accordion')
-			.on('click.accordion', function () {
-				const $header = $(this);
-				if ($header.hasClass('active')) {
-					return;
-				}
-				const $body = $header.next('.m_cnt_body');
-				$('.m_cnt_header.active').removeClass('active');
-				$('.m_cnt_body:visible').stop().slideUp(300);
-				$header.addClass('active');
-				$body.stop().slideDown(300, function () {
-					$('html, body').animate({
-						scrollTop: $header.offset().top - 120
-					}, 300);
-				});
-			});
-	}
-	function disableAccordion() {
-		isAccordion = false;
-		$('.m_cnt_header')
-			.off('click.accordion')
-			.removeClass('active');
-		$('.m_cnt_body')
-			.stop(true, true)
-			.show();
-	}
-	function checkAccordion() {
-		if ($(window).width() <= 1170) {
-			if (!isAccordion) {
-				enableAccordion();
-			}
-		} else {
-			if (isAccordion) {
-				disableAccordion();
-			}
-		}
-	}
-
-	checkAccordion();
-	let resizeTimer;
-	$(window).on('resize', function () {
-		clearTimeout(resizeTimer);
-		resizeTimer = setTimeout(function () {
-			checkAccordion();
+	var resizeTimer;
+	$(window).off('resize.tuougmAccordion').on('resize.tuougmAccordion', function () {
+		window.clearTimeout(resizeTimer);
+		resizeTimer = window.setTimeout(function () {
+			initMembersAccordion();
 		}, 150);
 	});
 });
@@ -162,6 +203,7 @@ $(function () {
 $(function(){
 
 	let $items = $();
+	let $activeModal = $();
 	let currentIndex = 0;
 	let isAnimating = false;
 	let touchStartX = 0;
@@ -187,21 +229,22 @@ $(function(){
 
 	function updateMeta(index){
 		const $target = $items.eq(index);
-		$('.mg_title').text(
+		$activeModal.find('.mg_title').text(
 			$target.data('title')
 		);
-		$('.mg_desc').text(
+		$activeModal.find('.mg_desc').text(
 			$target.data('desc')
 		);
-		$('.mg_download').attr(
+		$activeModal.find('.mg_download').attr(
 			'href',
 			$target.data('download')
 		);
 
 	}
 
-	function initSlide(index){
-		$('.mg_inner').html(
+	function initSlide(index, $modal){
+		$activeModal = $modal;
+		$activeModal.find('.mg_inner').html(
 			createSlide(index)
 		);
 		currentIndex = index;
@@ -209,9 +252,9 @@ $(function(){
 	}
 
 	function slideTo(index,direction){
-		if(isAnimating) return;
+		if(isAnimating || !$activeModal.length) return;
 		isAnimating = true;
-		const $inner = $('.mg_inner');
+		const $inner = $activeModal.find('.mg_inner');
 		const $newSlide = createSlide(index);
 		updateMeta(index);
 		if(direction === 'next'){
@@ -298,70 +341,80 @@ $(function(){
 
 	}
 
-	$(
-document).on('click','.js-gallery',function(e){
+	$(document).off('click.tuougmGalleryOpen', '.js-gallery').on('click.tuougmGalleryOpen', '.js-gallery', function(e){
 
     e.preventDefault();
 
     $items = $(this)
         .closest('.slide_thumb')
         .find('.js-gallery');
+	$activeModal = $(this)
+		.closest('.sec_m_cnt')
+		.find('.mg_modal')
+		.first();
+	if (!$activeModal.length) {
+		return;
+	}
 
     const index = $items.index(this);
 
     var windowWidth = $(window).width();
 
     if(windowWidth > 1170){
-        $('.mg_modal').height($('.m_body').outerHeight());
+		$activeModal.height($('.m_body').outerHeight());
     }
 
     $('body').addClass('modaal-noscroll_sp');
 
-    initSlide(index);
+    initSlide(index, $activeModal);
 
-    $('.mg_modal')
+    $activeModal
         .stop(true,true)
         .fadeIn(250);
 
 });
 
-	$('.mg_close').on('click',function(){
+	$(document).off('click.tuougmGalleryClose', '.mg_close').on('click.tuougmGalleryClose', '.mg_close', function(){
+		var $modal = $(this).closest('.mg_modal');
 		$('body').removeClass('modaal-noscroll_sp');
 
-		$('.mg_modal')
+		$modal
 			.stop(true,true)
 			.fadeOut(250);
 
 	});
-	$('.m_nav li').on('click',function(){
+	$(document).off('click.tuougmGalleryNav', '.m_nav li').on('click.tuougmGalleryNav', '.m_nav li', function(){
 		$('body').removeClass('modaal-noscroll_sp');
 
-		$('.mg_modal')
+		$('.mg_modal:visible')
 			.stop(true,true)
 			.fadeOut(250);
 
 	});
 
-	$('.mg_next').on('click',function(){
+	$(document).off('click.tuougmGalleryNext', '.mg_next').on('click.tuougmGalleryNext', '.mg_next', function(){
+		$activeModal = $(this).closest('.mg_modal');
 
 		nextSlide();
 
 	});
 
-	$('.mg_prev').on('click',function(){
+	$(document).off('click.tuougmGalleryPrev', '.mg_prev').on('click.tuougmGalleryPrev', '.mg_prev', function(){
+		$activeModal = $(this).closest('.mg_modal');
 
 		prevSlide();
 
 	});
 
-	$(document).on('touchstart','.mg_inner',function(e){
+	$(document).off('touchstart.tuougmGallerySwipe', '.mg_inner').on('touchstart.tuougmGallerySwipe', '.mg_inner', function(e){
+		$activeModal = $(this).closest('.mg_modal');
 
 		touchStartX =
 			e.originalEvent.touches[0].clientX;
 
 	});
 
-	$(document).on('touchend','.mg_inner',function(e){
+	$(document).off('touchend.tuougmGallerySwipe', '.mg_inner').on('touchend.tuougmGallerySwipe', '.mg_inner', function(e){
 
 		touchEndX =
 			e.originalEvent.changedTouches[0].clientX;
