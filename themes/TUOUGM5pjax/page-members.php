@@ -382,24 +382,4 @@ if ($membershipLevel == 0){
 
 
 
-<script>
-window.addEventListener('pageshow', function() {
-
-    const status = document.querySelector('.status');
-    const passWrap = document.querySelector('.pass-wrap');
-    const boot = document.querySelector('.boot-screen');
-
-    setTimeout(() => {
-        status.textContent = 'AUTHORIZATION PORT OPEN';
-    }, 500);
-
-    setTimeout(() => {
-        boot.style.display = 'none';
-        passWrap.style.display = 'block';
-    }, 1000);
-
-});
-</script>
-
-
 <?php get_footer();?>

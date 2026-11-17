@@ -80,6 +80,9 @@
 			if (typeof window.tuougmInitPage === 'function') {
 				window.tuougmInitPage();
 			}
+			if (typeof window.tuougmInitMembersPage === 'function') {
+				window.tuougmInitMembersPage();
+			}
 			if (typeof window.tuougmUpdateMusicTrackState === 'function') {
 				window.tuougmUpdateMusicTrackState();
 			}
