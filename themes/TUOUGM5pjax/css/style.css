@@ -4144,12 +4144,29 @@ width:100% !important;
 	color: #aaa;
 	text-align: center;
 }
+.press-kit__video-link {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+}
+.press-kit__video-link img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
 .press-kit__asset-placeholder {
 	display: grid;
 	min-height: 120px;
 	padding: 1em;
 	align-content: center;
 	gap: .5em;
+}
+.press-kit__asset-placeholder img {
+	display: block;
+	width: min(100%, 360px);
+	max-height: 90px;
+	height: auto;
+	object-fit: contain;
 }
 .press-kit__asset-placeholder span,
 .press-kit__placeholder {
