@@ -25,7 +25,7 @@ function tuougm_get_album_data($album_id) {
 
     $album = [
         'id'             => (string) $album_id,
-        'title'          => get_the_title($album_id),
+        'title'          => html_entity_decode( get_the_title( $album_id ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' ),
         'artist_name'    => '' !== $artist_name ? $artist_name : 'THE ULTIMATE SIN OF UNBUILT GUNPLA MOUNTAIN',
         'archive_only'   => (bool) get_field( 'archive_only', $album_id ),
         'title_en'       => get_field('album_title_en', $album_id),
@@ -101,7 +101,7 @@ function tuougm_get_track_data($track_id) {
 
     $track = [
     'id'           => (string) $track_id,
-    'title'        => get_the_title($track_id),
+    'title'        => html_entity_decode( get_the_title( $track_id ), ENT_QUOTES | ENT_HTML5, get_bloginfo( 'charset' ) ?: 'UTF-8' ),
     'title_en'     => get_field('track_title_en', $track_id),
     'type'         => get_field('track_type', $track_id),
     'src'          => $audio_url,
