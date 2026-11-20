@@ -90,7 +90,23 @@ if($loc){
 
 <?php
 $latest_album = array();
+$home_singles = array();
 if ( function_exists( 'get_field' ) ) {
+    $release_visibility_meta_query = array(
+        'relation' => 'AND',
+        array(
+            'relation' => 'OR',
+            array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
+            array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
+        ),
+        array(
+            // ACF True/False: form saves '0'/'1'; false via update_field() may save ''.
+            'relation' => 'OR',
+            array( 'key' => 'archive_only', 'compare' => 'NOT EXISTS' ),
+            array( 'key' => 'archive_only', 'value' => array( '0', '' ), 'compare' => 'IN' ),
+        ),
+    );
+
     $release_query = new WP_Query( array(
         'post_type'      => 'music_album',
         'post_status'    => 'publish',
@@ -98,31 +114,54 @@ if ( function_exists( 'get_field' ) ) {
         'posts_per_page' => 1,
         'no_found_rows'  => true,
         'orderby'       => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
-        'meta_query'    => array(
-            'relation' => 'AND',
-            array(
-                'relation' => 'OR',
-                array( 'key' => 'required_level', 'compare' => 'NOT EXISTS' ),
-                array( 'key' => 'required_level', 'value' => 0, 'compare' => '<=', 'type' => 'NUMERIC' ),
-            ),
-            array(
-                // ACF True/False: form saves '0'/'1'; false via update_field() may save ''.
-                'relation' => 'OR',
-                array( 'key' => 'archive_only', 'compare' => 'NOT EXISTS' ),
-                array( 'key' => 'archive_only', 'value' => array( '0', '' ), 'compare' => 'IN' ),
-            ),
+        'meta_query'     => array_merge(
+            $release_visibility_meta_query,
+            array( array( 'key' => 'album_type', 'value' => array( 'Album', 'EP' ), 'compare' => 'IN' ) )
         ),
     ) );
     foreach ( $release_query->posts as $release_post ) {
         $candidate = tuougm_get_album_data( $release_post->ID );
-        if ( ! empty( $candidate ) && ! $candidate['archive_only'] && $candidate['required_level'] <= 0 ) {
+        if (
+            ! empty( $candidate )
+            && in_array( $candidate['type'], array( 'Album', 'EP' ), true )
+            && ! $candidate['archive_only']
+            && $candidate['required_level'] <= 0
+        ) {
             $latest_album = $candidate;
             break;
         }
     }
+
+    $singles_query = new WP_Query( array(
+        'post_type'      => 'music_album',
+        'post_status'    => 'publish',
+        'has_password'   => false,
+        'posts_per_page' => -1,
+        'no_found_rows'  => true,
+        'orderby'        => array( 'menu_order' => 'ASC', 'ID' => 'DESC' ),
+        'meta_query'     => array_merge(
+            $release_visibility_meta_query,
+            array( array( 'key' => 'album_type', 'value' => 'Single', 'compare' => '=' ) )
+        ),
+    ) );
+
+    foreach ( $singles_query->posts as $single_post ) {
+        $candidate = tuougm_get_album_data( $single_post->ID );
+        if (
+            empty( $candidate )
+            || 'Single' !== $candidate['type']
+            || $candidate['archive_only']
+            || $candidate['required_level'] > 0
+            || empty( $candidate['tracks'] )
+        ) {
+            continue;
+        }
+
+        $home_singles[] = $candidate;
+    }
 }
 $is_release_english = ( 'en_US' === $locale );
-if ( $latest_album ) :
+if ( $latest_album ) {
     $release_title = $is_release_english && ! empty( $latest_album['title_en'] )
         ? $latest_album['title_en'] : $latest_album['title'];
     $release_type = $latest_album['type'];
@@ -136,10 +175,13 @@ if ( $latest_album ) :
         $is_release_english ? 'album_description_en' : 'album_description_ja',
         (int) $latest_album['id']
     );
+}
+if ( $latest_album || $home_singles ) :
 ?>
 <section class="sec_info def_sec sec_latest_release">
 <div class="inner_1200">
 <h2 class="ttl_sec_info"><span>LATEST RELEASE</span><a class="latest_release_view_all" href="<?php echo esc_url( function_exists( 'bogo_url' ) ? bogo_url( home_url( '/music/' ), $is_release_english ? 'en_US' : 'ja' ) : home_url( '/music/' ) ); ?>">VIEW ALL <span class="latest_release_view_all_music">MUSIC</span></a></h2>
+<?php if ( $latest_album ) : ?>
 <p class="sub_ttl_info"><?php echo $is_release_english ? 'Updating with the latest releases' : '最新のリリース'; ?></p>
 <div class="wrap_release flex_wrap">
 <figure><?php if ( $latest_album['artwork'] ) : ?><img src="<?php echo esc_url( $latest_album['artwork'] ); ?>" alt="<?php echo esc_attr( $release_title ); ?>"><?php endif; ?></figure>
@@ -163,6 +205,37 @@ if ( $latest_album ) :
 <p class="btn"><a href="javascript:void(0)" class="all_btn" data-player-album="<?php echo esc_attr( $latest_album['id'] ); ?>">PLAY ALL</a></p>
 </div>
 </div>
+<?php endif; ?>
+<?php if ( $home_singles ) : ?>
+<div class="home_singles" aria-labelledby="home-singles-title">
+<div class="home_singles_heading">
+<h4 id="home-singles-title" class="home_singles_title">SINGLES</h4>
+<?php if ( count( $home_singles ) > 4 ) : ?>
+<div class="home_singles_navigation">
+<button type="button" class="home_singles_nav" data-home-singles-direction="-1" aria-label="<?php echo esc_attr( $is_release_english ? 'Previous singles' : '前のシングル' ); ?>"><span aria-hidden="true">‹</span></button>
+<button type="button" class="home_singles_nav" data-home-singles-direction="1" aria-label="<?php echo esc_attr( $is_release_english ? 'Next singles' : '次のシングル' ); ?>"><span aria-hidden="true">›</span></button>
+</div>
+<?php endif; ?>
+</div>
+<div class="home_singles_track" data-home-singles-track role="region" tabindex="0" aria-label="<?php echo esc_attr( $is_release_english ? 'Singles' : 'シングル' ); ?>">
+<?php foreach ( $home_singles as $single_index => $single ) : ?>
+<?php
+    $single_track = $single['tracks'][0];
+    $single_track_title = $is_release_english && ! empty( $single_track['title_en'] ) ? $single_track['title_en'] : $single_track['title'];
+    $single_play_label = sprintf( $is_release_english ? 'Play %s' : '「%s」を再生', $single_track_title );
+    $single_pause_label = sprintf( $is_release_english ? 'Pause %s' : '「%s」を一時停止', $single_track_title );
+?>
+<article class="home_single_card">
+<button type="button" class="home_single_play all_btn" data-player-album="<?php echo esc_attr( $single['id'] ); ?>" data-play-label="<?php echo esc_attr( $single_play_label ); ?>" data-pause-label="<?php echo esc_attr( $single_pause_label ); ?>" aria-label="<?php echo esc_attr( $single_play_label ); ?>">
+<?php if ( $single['artwork'] ) : ?><img src="<?php echo esc_url( $single['artwork'] ); ?>" alt="" loading="lazy" decoding="async"><?php endif; ?>
+<span class="home_single_play_icon" aria-hidden="true">▶</span>
+</button>
+<?php if ( 0 === $single_index ) : ?><span class="home_single_badge">NEW</span><?php endif; ?>
+</article>
+<?php endforeach; ?>
+</div>
+</div>
+<?php endif; ?>
 </div>
 </section>
 <?php endif; ?>

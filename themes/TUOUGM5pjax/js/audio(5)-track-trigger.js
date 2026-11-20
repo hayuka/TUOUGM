@@ -116,6 +116,22 @@
     const hasPlaybackError = !!(audio && audio.error);
     const isEnglish = /^en(?:-|$)/i.test(document.documentElement.lang || '');
 
+    $('.home_single_play[data-player-album]').each(function() {
+      const $button = $(this);
+      const isCurrentAlbum = !!(
+        hasLoadedCurrentTrack &&
+        globalCurrentAlbum &&
+        String($button.attr('data-player-album') || '') === String(globalCurrentAlbum.id)
+      );
+      const isPlaying = isCurrentAlbum && !audio.paused && !audio.ended && !hasPlaybackError;
+
+      $button
+        .toggleClass('is-playing', isPlaying)
+        .attr('aria-label', isPlaying ? $button.attr('data-pause-label') : $button.attr('data-play-label'))
+        .find('.home_single_play_icon')
+        .text(isPlaying ? 'Ⅱ' : '▶');
+    });
+
     $('.music_track_item').each(function() {
       const $item = $(this);
       const itemTrackId = String($item.find('[data-player-track]').first().attr('data-player-track') || '');
