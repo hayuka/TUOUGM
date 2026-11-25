@@ -106,7 +106,7 @@ docker compose up -d
 
 Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、版別ZIP URLは404を返しました。このため公式の現行ZIP URLを使い、版ヘッダーとlockの完全なツリー指紋の両方を照合します。公開ZIPが差し替わった場合は指紋不一致で停止します。
 
-2026-11-25の現環境で全件インストーラーを実行したところ、lock対象のHello Dollyは`plugins/hello-dolly/`を期待していましたが、既存実体は`plugins/hello.php`でした。インストーラーは正規ZIPから別ディレクトリを追加し、管理画面にHello Dollyが2件表示されました。検証を中断し、今回追加されたディレクトリをGit管理外へ退避して元の3対象プラグインもバックアップ状態へ戻しました。DBの有効化一覧・WP Mail SMTP設定は実行前後で一致しています。Hello Dollyの配置を、完全な公式ZIP指紋検証を保ったまま一つに統一するまでは、この現環境で全件インストーラーを再実行しないでください。
+2026-11-25にHello Dollyの公式ZIPが既存の単体ファイル`plugins/hello.php`と重複し、管理画面に2件表示されました。不要プラグインとして除外する判断を受け、既存ファイルと検証時の重複ディレクトリを削除し、lockの行も削除しました。初回構築・同期のプラグイン復元はlockを読む`install-local-plugins.sh`のみで、Hello Dolly専用の別配置処理はありません。以後の構築・同期ではlockにある14件だけが配置されます。削除前後でHello Dolly以外の有効プラグイン識別子とWP Mail SMTP設定が同一であることを確認しました。
 
 #### Duplicate Page 4.5.9のローカル保全物からの復元
 
@@ -130,7 +130,6 @@ Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、�
 | Custom Post Type Permalinks | 3.6.0 | 有効 | WordPress.org版別ZIP |
 | Duplicate Page | 4.5.9 | 有効 | WordPress.org現行ZIP（指紋固定） |
 | Site Kit by Google | 1.192.0 | 無効 | WordPress.org版別ZIP |
-| Hello Dolly | 1.7.2 | 無効 | WordPress.org版別ZIP |
 | Intuitive Custom Post Order | 3.2.0 | 有効 | WordPress.org版別ZIP |
 | Post Views Counter | 1.8.2 | 有効 | WordPress.org版別ZIP |
 | WP Mail SMTP | 4.10.5 | 有効 | WordPress.org版別ZIP |
@@ -142,10 +141,10 @@ Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、�
 
 ### 2026-11-25 隔離復元・指紋検証
 
-- 一時ディレクトリに新規環境を作り、Gitの`HEAD`からAI SEO Assistant 25ファイルを復元した後、第三者製プラグイン15件を公式配布ZIPからインストールできることを確認しました。ローカルの稼働中プラグイン・DB・メディアは使用・変更していません。
-- 同じ隔離環境で2回目を実行し、15件すべてがローカル指紋検証のみで完了し、`curl`が一度も呼ばれないことを確認しました。
+- Hello Dolly除外前のlockにあった第三者製プラグイン15件について、一時環境で公式配布ZIPからの復元と2回目のダウンロードなし検証を実施した記録です。
 - Bogoに意図的な余分ファイルを置いた隔離コピーでは、指紋不一致で停止し、余分ファイルを保持しました。
-- 現在の同期済みローカル実体は公式配布物との不一致を含むため、この環境でインストーラーを実行すると、CPT Permalinksの追加ファイル検出時に安全停止します。Site KitおよびWP Mail SMTPにも追加ファイルがあります。これらを調査するまでは現ローカルでインストーラーを再実行しないでください。
+- Hello Dollyを削除した後、CPT Permalinks、Site Kit、WP Mail SMTPをlock指定の公式版へ差し替え、14件すべての完全指紋検証が通ることを確認しました。curlを失敗させる一時PATHで実行し、ダウンロードが発生しないことも確認しています。
+- 管理画面には第三者製プラグイン14件とGit管理下のAI SEO Assistantが表示され、Hello Dollyはありません。AI SEO Assistantの25ファイル、有効プラグイン一覧、WP Mail SMTP設定ハッシュは作業前後で維持されています。外部メールは送信していません。
 - `bash -n scripts/install-local-plugins.sh`、Pythonヘルパーのコンパイル確認、Compose設定検証、Git差分チェックを実施しました。
 
 ## 9. SwupのView Transitionログ
