@@ -102,7 +102,13 @@ Docker Composeは引き続き`./plugins:/var/www/html/wp-content/plugins`をbind
 docker compose up -d
 ```
 
-インストーラーは、存在するプラグインがlockの版と一致すれば検証だけを行います。欠けているものは`https://downloads.wordpress.org/plugin/{slug}.{version}.zip`から版を固定して取得し、ZIP内のプラグインヘッダーで版を照合して配置します。既存パスに異なる版や不完全なフォルダーがあれば上書きせず停止します。バージョン更新はlock変更と別途レビューで行います。利用元は[WordPress.orgのプラグイン配布ページ](https://wordpress.org/plugins/)で、版別ZIP URL形式はWordPress.orgの公式実装でも使われています。
+インストーラーは既存プラグインの完全なツリーをlock内のSHA-256と照合し、一致すればダウンロードせず検証完了します。lockの指紋は全パス、ディレクトリ、シンボリックリンク先、ファイル内容を含みます。欠けているプラグインだけを一時領域へ取得し、ZIP CRC、安全な相対パス、プラグインヘッダーの版、展開した完全なツリー指紋を確認してから、未使用のパスへ配置します。既存パスが不完全・異なる版・内容差・余分なファイルを含む場合は、何も上書きせず停止します。取得元は[WordPress.orgのプラグイン配布ページ](https://wordpress.org/plugins/)と公式配布ホストです。指紋変更やバージョン更新は別レビューが必要です。
+
+Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、版別ZIP URLは404を返しました。このため公式の現行ZIP URLを使い、版ヘッダーとlockの完全なツリー指紋の両方を照合します。公開ZIPが差し替わった場合は指紋不一致で停止します。
+
+不一致時は再実行を繰り返さず、対象ディレクトリ全体をGit管理外のバックアップへ複製してから、公式ZIPとの差分を調べます。追加ファイルがローカルデータかカスタマイズかを確認するまで削除・置換しません。カスタマイズがあれば独自コードとして分離します。AIO Migrationを再設置する場合は`storage/`を維持し、検証済みプラグイン配置後に戻します。lockの指紋をローカル実体に合わせて安易に更新しないでください。
+
+今回の同期環境の照合では、CPT PermalinksにリリースZIP外の3ファイル、Site Kitに追加の71ファイル、WP Mail SMTPに追加の17ファイルが見つかりました。これらのローカル実体はこのPRでは変更していません。厳密な検証スクリプトは該当ディレクトリで停止します。AIO Migrationの`storage/`のみはローカルデータとして指紋対象外です。
 
 | プラグイン | バージョン | 状態 | 取得元 |
 | --- | ---: | --- | --- |
@@ -114,17 +120,25 @@ docker compose up -d
 | Classic Editor | 1.7.0 | 有効 | WordPress.org版別ZIP |
 | Contact Form 7 | 6.2.6 | 有効 | WordPress.org版別ZIP |
 | Custom Post Type Permalinks | 3.6.0 | 有効 | WordPress.org版別ZIP |
-| Duplicate Page | 4.5.9 | 有効 | WordPress.org版別ZIP |
+| Duplicate Page | 4.5.9 | 有効 | WordPress.org現行ZIP（指紋固定） |
 | Site Kit by Google | 1.192.0 | 無効 | WordPress.org版別ZIP |
-| Hello Dolly | 1.7.2 | 無効 | WordPress.org版別ZIP（単一PHPファイル） |
+| Hello Dolly | 1.7.2 | 無効 | WordPress.org版別ZIP |
 | Intuitive Custom Post Order | 3.2.0 | 有効 | WordPress.org版別ZIP |
 | Post Views Counter | 1.8.2 | 有効 | WordPress.org版別ZIP |
 | WP Mail SMTP | 4.10.5 | 有効 | WordPress.org版別ZIP |
 | WP Multibyte Patch | 2.9.4 | 無効 | WordPress.org版別ZIP |
 
-`plugins/ai-seo-assistant/`は独自開発プラグインとしてGit管理を維持します。AIO同期では**Exclude themes**と**Exclude plugins**を選択し、DB・uploadsだけを同期します。プラグイン版の同期はこのlockを変更する別工程とし、`plugins/`をAIOで上書きしません。旧テーマ`TUOUGM2`〜`TUOUGM4`はGit追跡対象0件を確認して2026-11-25にローカルから削除済みです。現行テーマとWordPress標準テーマは保持しています。
+`plugins/ai-seo-assistant/`は独自開発プラグインとしてGit管理を維持します。新しいチェックアウトでは通常のGit checkoutで復元でき、隔離テストでは`git archive`から全ファイルを復元して確認します。AIO同期では**Exclude themes**と**Exclude plugins**を選択し、DB・uploadsだけを同期します。プラグイン版の同期はこのlockを変更する別工程とし、`plugins/`をAIOで上書きしません。旧テーマ`TUOUGM2`〜`TUOUGM4`はGit追跡対象0件を確認して2026-11-25にローカルから削除済みです。現行テーマとWordPress標準テーマは保持しています。
 
 現在のローカル作業ツリーには同期直後の実プラグインを保持しています。Git追跡解除後もComposeのbind mountが同じディレクトリを参照するため、管理画面のプラグイン状態・DBのactive plugin識別子・AIO storageの位置は変わりません。
+
+### 2026-11-25 隔離復元・指紋検証
+
+- 一時ディレクトリに新規環境を作り、Gitの`HEAD`からAI SEO Assistant 25ファイルを復元した後、第三者製プラグイン15件を公式配布ZIPからインストールできることを確認しました。ローカルの稼働中プラグイン・DB・メディアは使用・変更していません。
+- 同じ隔離環境で2回目を実行し、15件すべてがローカル指紋検証のみで完了し、`curl`が一度も呼ばれないことを確認しました。
+- Bogoに意図的な余分ファイルを置いた隔離コピーでは、指紋不一致で停止し、余分ファイルを保持しました。
+- 現在の同期済みローカル実体は公式配布物との不一致を含むため、この環境でインストーラーを実行すると、CPT Permalinksの追加ファイル検出時に安全停止します。Site KitおよびWP Mail SMTPにも追加ファイルがあります。これらを調査するまでは現ローカルでインストーラーを再実行しないでください。
+- `bash -n scripts/install-local-plugins.sh`、Pythonヘルパーのコンパイル確認、Compose設定検証、Git差分チェックを実施しました。
 
 ## 9. SwupのView Transitionログ
 

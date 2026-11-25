@@ -1,18 +1,18 @@
-# archive-slug<TAB>version<TAB>install-path<TAB>archive-root<TAB>entry-file<TAB>state
-# All packages are pinned to the official WordPress.org version archive:
-# https://downloads.wordpress.org/plugin/{archive-slug}.{version}.zip
-advanced-custom-fields	6.8.12	advanced-custom-fields	advanced-custom-fields	acf.php	active
-akismet	5.3.2	akismet	akismet	akismet.php	inactive
-all-in-one-wp-migration	7.112	all-in-one-wp-migration	all-in-one-wp-migration	all-in-one-wp-migration.php	active
-autoptimize	3.1.17	autoptimize	autoptimize	autoptimize.php	active
-bogo	3.9.3	bogo	bogo	bogo.php	active
-classic-editor	1.7.0	classic-editor	classic-editor	classic-editor.php	active
-contact-form-7	6.2.6	contact-form-7	contact-form-7	wp-contact-form-7.php	active
-custom-post-type-permalinks	3.6.0	custom-post-type-permalinks	custom-post-type-permalinks	custom-post-type-permalinks.php	active
-duplicate-page	4.5.9	duplicate-page	duplicate-page	duplicatepage.php	active
-google-site-kit	1.192.0	google-site-kit	google-site-kit	google-site-kit.php	inactive
-hello-dolly	1.7.2	.	hello-dolly	hello.php	inactive
-intuitive-custom-post-order	3.2.0	intuitive-custom-post-order	intuitive-custom-post-order.php	intuitive-custom-post-order.php	active
-post-views-counter	1.8.2	post-views-counter	post-views-counter	post-views-counter.php	active
-wp-mail-smtp	4.10.5	wp-mail-smtp	wp-mail-smtp	wp_mail_smtp.php	active
-wp-multibyte-patch	2.9.4	wp-multibyte-patch	wp-multibyte-patch	wp-multibyte-patch.php	inactive
+# slug<TAB>version<TAB>install-path<TAB>archive-root<TAB>entry-file<TAB>state<TAB>tree-sha256<TAB>archive-url<TAB>excluded-relative-paths
+# Fingerprints cover every path, directory, symlink target, and file content in the official package.
+# '-' archive URL uses https://downloads.wordpress.org/plugin/{slug}.{version}.zip.
+advanced-custom-fields	6.8.12	advanced-custom-fields	advanced-custom-fields	acf.php	active	6963629b21710df3ec99290b9451cd97f4fc6ef4dd4801eb7cf039ec1477c4bd	-	-
+akismet	5.3.2	akismet	akismet	akismet.php	inactive	6d563993f25f57624e1e11c91402cea203c5518f7c95c72ebe12e15d37cde700	-	-
+all-in-one-wp-migration	7.112	all-in-one-wp-migration	all-in-one-wp-migration	all-in-one-wp-migration.php	active	349f88dbf53a98f13e78e607418cec8d3d8a274556ec3d1cde4c7b607d2dd904	-	storage
+autoptimize	3.1.17	autoptimize	autoptimize	autoptimize.php	active	93aa51cdc38d6e553fde387b680688e211d50339ae2124a24004cba8e47a1dd1	-	-
+bogo	3.9.3	bogo	bogo	bogo.php	active	901526088653686991fa741bdb63cdd172d7cb176afe8bdb8557b95030a0bd09	-	-
+classic-editor	1.7.0	classic-editor	classic-editor	classic-editor.php	active	b89303a50aa0a1bd1abc0162738629e2c1a62541562901f3538cba838eda3e98	-	-
+contact-form-7	6.2.6	contact-form-7	contact-form-7	wp-contact-form-7.php	active	3e9a550b737c1ba5e3f4703d871eb84fb73829635612934723a543bb0eed5663	-	-
+custom-post-type-permalinks	3.6.0	custom-post-type-permalinks	custom-post-type-permalinks	custom-post-type-permalinks.php	active	0048818e044602b36faef6ab6204fed61dc05ecc0b1927cc854b886ab2a76c66	-	-
+duplicate-page	4.5.9	duplicate-page	duplicate-page	duplicatepage.php	active	44592913dc1a73de7638213da70f6bd57b468bed2cbce3b8c92404f4cce169df	https://downloads.wordpress.org/plugin/duplicate-page.zip	-
+google-site-kit	1.192.0	google-site-kit	google-site-kit	google-site-kit.php	inactive	bf27956364cc4cb222a56fc0dd44d823f390c7959be4ff4f7cceab5e579a96be	-	-
+hello-dolly	1.7.2	hello-dolly	hello-dolly	hello.php	inactive	4d237108c6b3864e8be1f2adb243b8558291116adf061dc39a1b8dc15d8fcf07	-	-
+intuitive-custom-post-order	3.2.0	intuitive-custom-post-order	intuitive-custom-post-order	intuitive-custom-post-order.php	active	f587b03b1dd98fa071961c7a1432d84d926e63a730eb1064464ade1716c573b4	-	-
+post-views-counter	1.8.2	post-views-counter	post-views-counter	post-views-counter.php	active	04141679a61ab4151b93c97dccd9e486eb24184963d4a15be510532c0edc0fd9	-	-
+wp-mail-smtp	4.10.5	wp-mail-smtp	wp-mail-smtp	wp_mail_smtp.php	active	4731d75391f497f110faf04add593389f889c51099027661a579514ffe1ed614	-	-
+wp-multibyte-patch	2.9.4	wp-multibyte-patch	wp-multibyte-patch	wp-multibyte-patch.php	inactive	072ef535695aa39731a8977c65cf86583149e26efcef9cee87eee25b8a393e71	-	-
