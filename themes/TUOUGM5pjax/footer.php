@@ -27,6 +27,20 @@ if ( $japanese_members_page && 'publish' === get_post_status( $japanese_members_
 		$members_url = get_permalink( $members_page );
 	}
 }
+$press_url = '';
+$english_press_page = function_exists( 'bogo_get_page_by_path' )
+	? bogo_get_page_by_path( 'press', 'en_US', 'page' )
+	: null;
+if ( $english_press_page && 'publish' === get_post_status( $english_press_page ) ) {
+	$press_page = $is_english
+		? $english_press_page
+		: ( function_exists( 'bogo_get_post_translation' )
+			? bogo_get_post_translation( $english_press_page->ID, 'ja' )
+			: null );
+	if ( $press_page && 'publish' === get_post_status( $press_page ) ) {
+		$press_url = get_permalink( $press_page );
+	}
+}
 $privacy_url = get_privacy_policy_url();
 ?>
 <footer id="swup-footer" class="ft">
@@ -51,6 +65,13 @@ $privacy_url = get_privacy_policy_url();
 							<a href="<?php echo esc_url( $members_url ); ?>">MEMBERS</a>
 						<?php else : ?>
 							<span class="ft_nav_unavailable" aria-disabled="true">MEMBERS</span>
+						<?php endif; ?>
+					</li>
+					<li>
+						<?php if ( $press_url ) : ?>
+							<a href="<?php echo esc_url( $press_url ); ?>">PRESS</a>
+						<?php else : ?>
+							<span class="ft_nav_unavailable" aria-disabled="true">PRESS</span>
 						<?php endif; ?>
 					</li>
 				</ul>
