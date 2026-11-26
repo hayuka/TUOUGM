@@ -7,9 +7,9 @@
 | 項目 | 設定・確認値 |
 | --- | --- |
 | Composeプロジェクト | `tuougm-site` |
-| WordPressイメージ | `wordpress:6.5-php8.2-apache` |
-| 実行中WordPress | 6.5.5 |
-| 実行中PHP | 8.2.21（64bit） |
+| WordPressイメージ | `wordpress:7.1.5-php8.3-apache` |
+| 実行中WordPress | 7.1.5 |
+| 実行中PHP | 8.3.37（64bit、最終確認 2026-11-25） |
 | DBイメージ | `mysql:8.0` |
 | 有効テーマ | `TUOUGM5pjax` |
 | 公開先 | `127.0.0.1:8088` |
@@ -48,6 +48,20 @@ docker compose up -d
 | プラグイン | ホスト `plugins/` → `/var/www/html/wp-content/plugins` |
 
 テーマ・プラグイン全体が書き込み可能なマウントです。管理画面での追加・更新・移行による上書きはホスト側にも反映されます。
+
+## プラグインの復元とGit管理
+
+`plugins/` には独自開発の `ai-seo-assistant` と、lockで固定した第三者製プラグイン14件の実体をGit管理します。Hello Dollyは対象外です。第三者製プラグインの更新は `docker/third-party-plugins.lock` の版・公式配布元・ツリー指紋をレビューしてから行ってください。
+
+新規チェックアウトでは、Docker起動前に次を実行します。
+
+```sh
+./scripts/install-local-plugins.sh
+docker compose config --quiet
+docker compose up -d
+```
+
+スクリプトは既存の各プラグインを公式配布ZIPのlock指紋と照合し、欠けているものだけを検証して復元します。不完全・改変済みの既存ディレクトリは上書きせず停止するため、原因を調査してから再実行してください。DB内のプラグイン有効・無効状態はこの処理では変更しません。All-in-One WP Migrationの `storage/` はローカル生成データとしてGit管理外にします。
 
 ## 大容量アップロード
 

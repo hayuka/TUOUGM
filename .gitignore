@@ -10,12 +10,8 @@
 /vendor/
 /themes/**/node_modules/
 /plugins/**/node_modules/
-# Third-party plugins are downloaded into this runtime mount, not versioned.
-# Keep the first-party AI SEO Assistant source under Git control.
-/plugins/*
-!/plugins/.gitkeep
-!/plugins/ai-seo-assistant/
-!/plugins/ai-seo-assistant/**
+# Plugin source, including pinned third-party distributions, is versioned.
+# Keep only local AIO data and generated dependency directories out of Git.
 *.log
 *.wpress
 /plugins/all-in-one-wp-migration/storage/

@@ -1,6 +1,6 @@
 # 本番WordPressをローカルへ同期する手順
 
-本番環境をデータの正本、Gitを独自テーマ・独自開発コード・環境構築設定の正本として扱います。本番への書き込みは禁止です。DB・会員情報・メディアを含むバックアップはGitへ追加しません。
+本番環境を投稿・設定・メディアの正本、Gitをテーマ・独自開発コード・lock指定の第三者製プラグイン実体・環境構築設定の正本として扱います。本番への書き込みは禁止です。DB・会員情報・メディアを含むバックアップはGitへ追加しません。
 
 ## 2026-11-25の同期・環境更新状況
 
@@ -93,9 +93,9 @@ Dockerボリューム・DBを削除して作り直す操作（`docker compose do
 
 ## 8. プラグインのGit管理と再構築
 
-Docker Composeは引き続き`./plugins:/var/www/html/wp-content/plugins`をbind mountします。プラグインの識別パスやAIOのローカルstorageを変えずに済み、稼働中の実体を維持できます。Gitでは`plugins/ai-seo-assistant/`のみ独自プラグインとして管理し、第三者製プラグインの作業ツリー上の実体はローカルで保持しつつGitの追跡から外します。
+Docker Composeは`./plugins:/var/www/html/wp-content/plugins`をbind mountします。プラグインの識別パスやAIOのローカルstorageを変えず、Gitから実体を再現できます。`plugins/ai-seo-assistant/`は独自開発コードとして、lock指定の第三者製プラグイン14件は公式配布版の実体としてGit管理します。Hello Dollyは復元対象にもGit管理対象にも含めません。
 
-第三者製プラグインの名前、バージョン、WordPress.orgからの取得情報、有効状態は`docker/third-party-plugins.lock`に固定しています。再構築時はDockerを起動する前に次を実行します。
+第三者製プラグインの名前、バージョン、WordPress.orgからの取得情報、DB上で確認した参考有効状態、公式配布ツリーのSHA-256は`docker/third-party-plugins.lock`に固定しています。新規チェックアウト・再構築時はDockerを起動する前に次を実行し、Git上の実体を検証します。欠損プラグインがある場合だけ公式配布ZIPから復元します。
 
 ```sh
 ./scripts/install-local-plugins.sh
@@ -116,7 +116,7 @@ Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、�
 
 不一致時は再実行を繰り返さず、対象ディレクトリ全体をGit管理外のバックアップへ複製してから、公式ZIPとの差分を調べます。追加ファイルがローカルデータかカスタマイズかを確認するまで削除・置換しません。カスタマイズがあれば独自コードとして分離します。AIO Migrationを再設置する場合は`storage/`を維持し、検証済みプラグイン配置後に戻します。lockの指紋をローカル実体に合わせて安易に更新しないでください。
 
-今回の同期環境の照合では、CPT PermalinksにリリースZIP外の3ファイル、Site Kitに追加の71ファイル、WP Mail SMTPに追加の17ファイルが見つかりました。これらのローカル実体はこのPRでは変更していません。厳密な検証スクリプトは該当ディレクトリで停止します。AIO Migrationの`storage/`のみはローカルデータとして指紋対象外です。
+2026-11-25の同期直後にはCPT Permalinks、Site Kit、WP Mail SMTP等で公式ZIPと異なるファイル構成が検出されました。差分調査とバックアップを経て公式版を検証・再配置する運用を行っています。AIO Migrationの`storage/`のみはローカルデータとして指紋対象外で、Gitにも含めません。
 
 | プラグイン | バージョン | 状態 | 取得元 |
 | --- | ---: | --- | --- |
@@ -135,9 +135,9 @@ Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、�
 | WP Mail SMTP | 4.10.5 | 有効 | WordPress.org版別ZIP |
 | WP Multibyte Patch | 2.9.4 | 無効 | WordPress.org版別ZIP |
 
-`plugins/ai-seo-assistant/`は独自開発プラグインとしてGit管理を維持します。新しいチェックアウトでは通常のGit checkoutで復元でき、隔離テストでは`git archive`から全ファイルを復元して確認します。AIO同期では**Exclude themes**と**Exclude plugins**を選択し、DB・uploadsだけを同期します。プラグイン版の同期はこのlockを変更する別工程とし、`plugins/`をAIOで上書きしません。旧テーマ`TUOUGM2`〜`TUOUGM4`はGit追跡対象0件を確認して2026-11-25にローカルから削除済みです。現行テーマとWordPress標準テーマは保持しています。
+`plugins/ai-seo-assistant/`は独自開発プラグインとしてGit管理を維持します。新しいチェックアウトでは通常のGit checkoutで復元できます。AIO同期では**Exclude themes**と**Exclude plugins**を選択し、DB・uploadsだけを同期します。`plugins/`はGit版を維持し、プラグイン版の変更はlockと公式ZIP指紋を更新する別工程にします。旧テーマ`TUOUGM2`〜`TUOUGM4`はGit追跡対象0件を確認して2026-11-25にローカルから削除済みです。現行テーマとWordPress標準テーマは保持しています。
 
-現在のローカル作業ツリーには同期直後の実プラグインを保持しています。Git追跡解除後もComposeのbind mountが同じディレクトリを参照するため、管理画面のプラグイン状態・DBのactive plugin識別子・AIO storageの位置は変わりません。
+プラグインソースのGit追跡は、Composeのbind mount、管理画面の有効・無効状態、DB内のactive plugin識別子を変更しません。インストーラーはファイルの検証・復元だけを行い、有効化や設定のDB変更を行いません。
 
 ### 2026-11-25 隔離復元・指紋検証
 
@@ -146,6 +146,14 @@ Duplicate Page 4.5.9はWordPress.org APIが現行版として返しますが、�
 - Hello Dollyを削除した後、CPT Permalinks、Site Kit、WP Mail SMTPをlock指定の公式版へ差し替え、14件すべての完全指紋検証が通ることを確認しました。curlを失敗させる一時PATHで実行し、ダウンロードが発生しないことも確認しています。
 - 管理画面には第三者製プラグイン14件とGit管理下のAI SEO Assistantが表示され、Hello Dollyはありません。AI SEO Assistantの25ファイル、有効プラグイン一覧、WP Mail SMTP設定ハッシュは作業前後で維持されています。外部メールは送信していません。
 - `bash -n scripts/install-local-plugins.sh`、Pythonヘルパーのコンパイル確認、Compose設定検証、Git差分チェックを実施しました。
+
+### 2026-11-26 第三者製プラグインのGit追跡方針
+
+- 方針を変更し、lock指定の第三者製プラグイン14件の公式版実体をGit管理対象に戻します。`plugins/ai-seo-assistant/`も引き続き追跡します。Hello Dollyは削除状態を保ち、復元しません。
+- 初回構築ではGit checkoutでプラグイン実体を取得し、`bash scripts/install-local-plugins.sh`で全14件の完全指紋を照合してからDockerを起動します。欠損時はスクリプトが公式配布物を検証して復元します。不完全・異なる既存ディレクトリは上書きされず停止するため、Git外へ退避して原因を調査してから再実行します。
+- `.gitignore`では第三者製プラグイン全体を除外せず、生成依存物、ログ、および`plugins/all-in-one-wp-migration/storage/`だけを除外します。lock、指紋ヘルパー、復元スクリプトもGit管理を維持します。
+- 本番同期ではAIOの**Exclude themes**と**Exclude plugins**を選択し、DB・uploadsのみを取り込みます。同期後にローカルのGit管理プラグインを上書きしないでください。DBに保存された有効化状態はそのまま維持し、この手順で有効化・無効化しません。
+- `storage/`、`.wpress`、DBダンプ、認証情報、バックアップはGitへ追加しません。ローカルバックアップの保持・最終削除は別途承認に従います。
 
 ## 9. SwupのView Transitionログ
 
