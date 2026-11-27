@@ -1,0 +1,14 @@
+# Explicit opt-in LAN access for local iPhone testing.
+# Use scripts/start-iphone-test.sh; do not bind this port to 0.0.0.0.
+services:
+  wordpress:
+    ports:
+      - "${LAN_TEST_IP:?Run scripts/start-iphone-test.sh with the Mac LAN IPv4 address}:8089:80"
+    environment:
+      TUOUGM_LAN_TEST_URL: "http://${LAN_TEST_IP:?LAN_TEST_IP is required}:8089"
+      TUOUGM_LAN_TEST_HOST: "${LAN_TEST_IP:?LAN_TEST_IP is required}:8089"
+      TUOUGM_LOCAL_BASE_URL: "http://localhost:8088"
+    volumes:
+      - ./docker/iphone-test/tuougm-lan-url.php:/var/www/html/wp-content/mu-plugins/tuougm-lan-url.php:ro
+      - ./docker/iphone-test/apache-lan-css-entrypoint.sh:/usr/local/bin/tuougm-iphone-test-entrypoint:ro
+    command: ["bash", "/usr/local/bin/tuougm-iphone-test-entrypoint"]
