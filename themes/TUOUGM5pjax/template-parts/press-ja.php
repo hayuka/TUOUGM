@@ -64,7 +64,6 @@
 
 <section class="press-kit__section" aria-labelledby="press-assets-ja">
 <h2 id="press-assets-ja">04. PRESS ASSETS</h2>
-<p>配布対象はTUOUGM公式ロゴのみです。アルバムジャケットおよびキャラクター画像は含みません。</p>
 <?php
 $press_kit_path = get_template_directory() . "/press-assets/TUOUGM_Press_Kit.pdf";
 $press_kit_bytes = is_readable( $press_kit_path ) ? filesize( $press_kit_path ) : false;

@@ -64,7 +64,6 @@
 
 <section class="press-kit__section" aria-labelledby="press-assets-en">
 <h2 id="press-assets-en">04. PRESS ASSETS</h2>
-<p>Only approved TUOUGM logos will be provided here. Album artwork and character images are excluded.</p>
 <?php
 $press_kit_path = get_template_directory() . "/press-assets/TUOUGM_Press_Kit.pdf";
 $press_kit_bytes = is_readable( $press_kit_path ) ? filesize( $press_kit_path ) : false;
