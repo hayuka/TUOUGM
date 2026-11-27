@@ -29,6 +29,118 @@
     ? window.tuougmPlayerConfig.restNonce
     : '';
 
+  const PLAYER_DEBUG_LOG_KEY = 'tuougmPlayerDebugLog';
+  const PLAYER_DEBUG_ENABLED_KEY = 'tuougmPlayerDebugEnabled';
+  const PLAYER_DEBUG_MAX_ENTRIES = 120;
+  let playerDebugEnabled = new URLSearchParams(location.search).get('tuougm_player_debug') === '1';
+  let playerDebugLog = [];
+  let lastDebugTimeSample = -15;
+
+  try {
+    if (playerDebugEnabled) {
+      sessionStorage.setItem(PLAYER_DEBUG_ENABLED_KEY, '1');
+    } else {
+      playerDebugEnabled = sessionStorage.getItem(PLAYER_DEBUG_ENABLED_KEY) === '1';
+    }
+    const savedDebugLog = sessionStorage.getItem(PLAYER_DEBUG_LOG_KEY);
+    playerDebugLog = savedDebugLog ? JSON.parse(savedDebugLog) : [];
+    if (!Array.isArray(playerDebugLog)) playerDebugLog = [];
+    playerDebugLog = playerDebugLog.slice(-PLAYER_DEBUG_MAX_ENTRIES);
+  } catch (error) {
+    playerDebugLog = [];
+  }
+
+  function getDebugSourceClass(src) {
+    if (!src) return 'none';
+    try {
+      return new URL(src, location.href).origin === location.origin ? 'same-origin' : 'other-origin';
+    } catch (error) {
+      return 'invalid';
+    }
+  }
+
+  function getDebugLogJSON() {
+    try {
+      const savedDebugLog = sessionStorage.getItem(PLAYER_DEBUG_LOG_KEY);
+      if (savedDebugLog) return savedDebugLog;
+    } catch (error) {
+      // In-memory diagnostics remain available when session storage is blocked.
+    }
+    return JSON.stringify(playerDebugLog);
+  }
+
+  function clearPlayerDebugLog() {
+    playerDebugEnabled = false;
+    playerDebugLog = [];
+    try {
+      sessionStorage.removeItem(PLAYER_DEBUG_LOG_KEY);
+      sessionStorage.removeItem(PLAYER_DEBUG_ENABLED_KEY);
+    } catch (error) {
+      // Clearing diagnostics must not affect audio playback.
+    }
+    return true;
+  }
+
+  function recordPlayerDebugEvent(name, details) {
+    if (!playerDebugEnabled) return;
+
+    const audio = globalCurrentAudio;
+    const currentTrack = getCurrentTrack();
+    const now = audio ? Number(audio.currentTime) || 0 : 0;
+    if (name === 'timeupdate') {
+      if (now >= lastDebugTimeSample && now - lastDebugTimeSample < 15) return;
+      lastDebugTimeSample = now;
+    }
+
+    const mediaError = audio && audio.error;
+    const audioSession = navigator.audioSession;
+    const entry = {
+      at: new Date().toISOString(),
+      elapsedMs: Math.round(performance.now()),
+      event: name,
+      trackId: currentTrack ? String(currentTrack.id) : (audio && audio.dataset.trackId ? String(audio.dataset.trackId) : ''),
+      readyState: audio ? audio.readyState : null,
+      networkState: audio ? audio.networkState : null,
+      paused: audio ? audio.paused : null,
+      ended: audio ? audio.ended : null,
+      currentTime: audio ? now : null,
+      duration: audio && Number.isFinite(audio.duration) ? audio.duration : null,
+      visibilityState: document.visibilityState,
+      mediaErrorCode: mediaError ? mediaError.code : 0,
+      audioSessionSupported: !!audioSession,
+      audioSessionType: audioSession && audioSession.type ? String(audioSession.type) : '',
+      audioSessionState: audioSession && audioSession.state ? String(audioSession.state) : '',
+      ...(details || {})
+    };
+
+    playerDebugLog.push(entry);
+    if (playerDebugLog.length > PLAYER_DEBUG_MAX_ENTRIES) {
+      playerDebugLog = playerDebugLog.slice(-PLAYER_DEBUG_MAX_ENTRIES);
+    }
+
+    try {
+      sessionStorage.setItem(PLAYER_DEBUG_LOG_KEY, JSON.stringify(playerDebugLog));
+    } catch (error) {
+      // Diagnostic storage failure must never affect playback.
+    }
+  }
+
+  if (playerDebugEnabled) {
+    window.tuougmPlayerDebug = {
+      getJSON: getDebugLogJSON,
+      copy: function() {
+        const json = getDebugLogJSON();
+        if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') return Promise.resolve(json);
+        return navigator.clipboard.writeText(json).then(function() {
+          return true;
+        }).catch(function() {
+          return json;
+        });
+      },
+      clear: clearPlayerDebugLog
+    };
+  }
+
   function formatTime(sec) {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
@@ -199,6 +311,17 @@
     if (globalCurrentAudio) return globalCurrentAudio;
     globalCurrentAudio = new Audio();
     globalCurrentAudio.preload = 'none';
+    if (playerDebugEnabled) {
+      [
+        'loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough',
+        'play', 'playing', 'pause', 'waiting', 'stalled', 'suspend', 'abort',
+        'emptied', 'durationchange', 'seeking', 'seeked', 'error', 'ended', 'timeupdate'
+      ].forEach(function(eventName) {
+        globalCurrentAudio.addEventListener(eventName, function() {
+          recordPlayerDebugEvent('audio-' + eventName);
+        });
+      });
+    }
     globalCurrentAudio.addEventListener('timeupdate', updateSeek);
     globalCurrentAudio.addEventListener('loadedmetadata', updateSeek);
     globalCurrentAudio.addEventListener('playing', function() {
@@ -222,13 +345,19 @@
     audio.dataset.trackId = track.id;
     audio.dataset.gaPlayed = '0';
     audio.src = track.src;
+    recordPlayerDebugEvent('audio-src-change', {
+      trackId: String(track.id),
+      sourceClass: getDebugSourceClass(track.src)
+    });
     audio.preload = 'none';
     audio.load();
+    recordPlayerDebugEvent('audio-load-called', { trackId: String(track.id) });
     return audio;
   }
 
   function playAudio(track) {
     const audio = loadAudio(track);
+    recordPlayerDebugEvent('play-called', { trackId: track ? String(track.id) : '' });
     return audio.play();
   }
 
@@ -253,7 +382,9 @@
     });
 
     navigator.mediaSession.setActionHandler('play', function() {
-      playAudio(track).catch(() => {});
+      playAudio(track).catch(function(error) {
+        recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+      });
       updateUI();
     });
     navigator.mediaSession.setActionHandler('pause', function() {
@@ -352,6 +483,10 @@
   function playTrack(index) {
     if (!globalCurrentPlaylist.length || isTransitioning) return;
     if (index < 0 || index >= globalCurrentPlaylist.length) return;
+    recordPlayerDebugEvent('play-track-start', {
+      targetTrackId: String(globalCurrentPlaylist[index].id),
+      targetIndex: index
+    });
     isTransitioning = true;
     keepActiveDuringTransition = true;
 
@@ -363,11 +498,16 @@
     resetSeek();
 
     playAudio(track).then(function(){
+      recordPlayerDebugEvent('play-track-resolved', { targetTrackId: String(track.id) });
       isTransitioning = false;
       keepActiveDuringTransition = false;
       updateMediaSession();
       updateUI();
-    }).catch(function(){
+    }).catch(function(error){
+      recordPlayerDebugEvent('play-track-rejected', {
+        targetTrackId: String(track.id),
+        errorName: error && error.name ? String(error.name) : 'Error'
+      });
       isTransitioning = false;
       keepActiveDuringTransition = false;
       globalIsPlayingAll = false;
@@ -391,6 +531,11 @@
   }
 
 function handleEnded() {
+  recordPlayerDebugEvent('handle-ended', {
+    trackId: getCurrentTrack() ? String(getCurrentTrack().id) : '',
+    currentIndex: globalCurrentIndex,
+    playlistLength: globalCurrentPlaylist.length
+  });
   if (isTransitioning) return;
 
   // 1. アルバム内に次の曲があれば、次の曲を再生
@@ -431,6 +576,11 @@ function handleEnded() {
   function setAlbum(albumId, startIndex, autoPlay) {
     const album = getAlbum(albumId);
     if (!album || !album.tracks.length) return;
+    recordPlayerDebugEvent('set-album', {
+      albumId: String(albumId),
+      startIndex: Number(startIndex) || 0,
+      autoPlay: !!autoPlay
+    });
     globalCurrentAlbum = album;
     globalCurrentPlaylist = album.tracks;
     globalCurrentIndex = Math.max(0, Math.min(startIndex || 0, globalCurrentPlaylist.length - 1));
@@ -616,7 +766,9 @@ function handleEnded() {
           globalIsPlayingAll = false;
           updateUI();
         } else {
-          playAudio(getCurrentTrack()).catch(() => {});
+          playAudio(getCurrentTrack()).catch(function(error) {
+            recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+          });
           globalIsPlayingAll = true;
           updateMediaSession();
           updateUI();
@@ -671,7 +823,9 @@ function handleEnded() {
         globalIsPlayingAll = false;
         updateUI();
       } else {
-        playAudio(getCurrentTrack()).catch(() => {});
+        playAudio(getCurrentTrack()).catch(function(error) {
+          recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+        });
         globalIsPlayingAll = true;
         updateMediaSession();
         updateUI();
@@ -810,7 +964,9 @@ function handleEnded() {
         globalIsPlayingAll = false;
         updateUI();
       } else {
-        playAudio(getCurrentTrack()).catch(() => {});
+        playAudio(getCurrentTrack()).catch(function(error) {
+          recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+        });
         globalIsPlayingAll = true;
         updateMediaSession();
         updateUI();
@@ -844,7 +1000,9 @@ function handleEnded() {
         globalIsPlayingAll = false;
         updateUI();
       } else {
-        playAudio(getCurrentTrack()).catch(() => {});
+        playAudio(getCurrentTrack()).catch(function(error) {
+          recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+        });
         globalIsPlayingAll = true;
         updateMediaSession();
         updateUI();
@@ -876,7 +1034,9 @@ function handleEnded() {
           globalIsPlayingAll = false;
           updateUI();
         } else {
-          playAudio(track).catch(() => {});
+          playAudio(track).catch(function(error) {
+            recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+          });
           updateMediaSession();
           updateUI();
         }
@@ -898,7 +1058,9 @@ function handleEnded() {
           globalIsPlayingAll = false;
           updateUI();
         } else {
-          playAudio(getCurrentTrack()).catch(() => {});
+          playAudio(getCurrentTrack()).catch(function(error) {
+            recordPlayerDebugEvent('play-rejected', { errorName: error && error.name ? String(error.name) : 'Error' });
+          });
           globalIsPlayingAll = true;
           updateMediaSession();
           updateUI();
@@ -941,9 +1103,14 @@ function handleEnded() {
   setInterval(updateSeek, 500);
 
   document.addEventListener('visibilitychange', function() {
+    recordPlayerDebugEvent('visibilitychange');
     if (document.visibilityState === 'visible') {
       updateUI();
     }
+  });
+
+  window.addEventListener('pagehide', function() {
+    recordPlayerDebugEvent('pagehide');
   });
 
   $(function(){ loadPlayerData(); });
