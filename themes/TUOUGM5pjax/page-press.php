@@ -1,8 +1,7 @@
 <?php get_header(); ?>
 
 <?php
-$loc = isset( $_GET["loc"] ) && is_string( $_GET["loc"] ) ? wp_unslash( $_GET["loc"] ) : "";
-$locale = "en_US" === $loc ? "en_US" : get_locale();
+$locale = get_locale();
 ?>
 <main id="swup" class="main_wrap transition-fade">
 
