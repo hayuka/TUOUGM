@@ -64,13 +64,31 @@
 
 <section class="press-kit__section" aria-labelledby="press-assets-ja">
 <h2 id="press-assets-ja">04. PRESS ASSETS</h2>
-<p>配布対象はTUOUGM公式ロゴのみです。アルバムジャケットおよびキャラクター画像は含みません。</p>
+<?php
+$press_kit_path = get_template_directory() . "/press-assets/TUOUGM_Press_Kit.pdf";
+$press_kit_bytes = is_readable( $press_kit_path ) ? filesize( $press_kit_path ) : false;
+?>
+<div class="press-kit__resources">
+<p class="press-kit__resources-eyebrow">PRESS / MEDIA RESOURCES</p>
+<h3 class="press-kit__resources-title">PRESS KIT</h3>
+<p class="press-kit__resources-description">メディア・編集者向けのプレス素材、アーティストの背景、記録写真、代表曲。</p>
+<article class="press-kit__resource">
+<div class="press-kit__resource-icon" aria-hidden="true"><svg viewBox="0 0 48 56" focusable="false"><path d="M8 2h21l11 11v41H8z"/><path d="M29 2v12h11M14 31h20M14 38h20M14 45h13"/><path d="M5 24h38v15H5z" class="press-kit__resource-icon-label"/><text x="24" y="35" text-anchor="middle">PDF</text></svg></div>
+<div class="press-kit__resource-content">
+<p class="press-kit__resource-number">01</p>
+<h4 class="press-kit__resource-title">From Yokosuka Hardcore to Gunpla Punk</h4>
+<p class="press-kit__resource-summary">アーティスト背景／活動年表／代表曲</p>
+<?php if ( false !== $press_kit_bytes ) : ?>
+<p class="press-kit__resource-meta">English · PDF · 6 pages · <?php echo esc_html( number_format_i18n( $press_kit_bytes / 1000000, 2 ) . " MB" ); ?></p>
+<?php endif; ?>
+<p class="btn"><a href="<?php echo esc_url( get_template_directory_uri() . "/press-assets/TUOUGM_Press_Kit.pdf" ); ?>" download="TUOUGM_Press_Kit.pdf" data-no-swup="">DOWNLOAD PDF</a></p>
+</div>
+</article>
+</div>
 <div class="press-kit__asset-grid">
 <div class="press-kit__asset-placeholder"><strong>LOGO ASSET 01</strong><img src="/wp-content/themes/TUOUGM5pjax/img/logo.webp" alt="TUOUGM公式ロゴ" width="624" height="135" loading="lazy"></div>
 <div class="press-kit__asset-placeholder"><strong>LOGO ASSET 02</strong><img src="/wp-content/themes/TUOUGM5pjax/img/newlogo.png" alt="TUOUGM公式ロゴ" width="624" height="135" loading="lazy"></div>
-<div class="press-kit__asset-placeholder"><strong>LOGO ASSET 03</strong><span>画像・ダウンロードURL未設定</span></div>
 </div>
-<p class="press-kit__placeholder">【利用条件未確定】公開前にロゴの利用条件を記載してください。</p>
 </section>
 
 <section class="press-kit__section" aria-labelledby="press-contact-ja">
