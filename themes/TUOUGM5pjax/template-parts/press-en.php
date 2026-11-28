@@ -69,6 +69,8 @@ $press_kit_path = get_template_directory() . "/press-assets/TUOUGM_Press_Kit.pdf
 $press_kit_bytes = is_readable( $press_kit_path ) ? filesize( $press_kit_path ) : false;
 $press_kit_02_path = get_template_directory() . "/press-assets/TUOUGM_IDIOTEQ_Press_Kit.pdf";
 $press_kit_02_bytes = is_readable( $press_kit_02_path ) ? filesize( $press_kit_02_path ) : false;
+$press_kit_03_path = get_template_directory() . "/press-assets/TUOUGM_EKLEKTIK_Press_Kit.pdf";
+$press_kit_03_bytes = is_readable( $press_kit_03_path ) ? filesize( $press_kit_03_path ) : false;
 ?>
 <div class="press-kit__resources">
 <p class="press-kit__resources-eyebrow">PRESS / MEDIA RESOURCES</p>
@@ -96,6 +98,18 @@ $press_kit_02_bytes = is_readable( $press_kit_02_path ) ? filesize( $press_kit_0
 <p class="press-kit__resource-meta">English · PDF · 6 pages · <?php echo esc_html( number_format_i18n( $press_kit_02_bytes / 1000000, 2 ) . " MB" ); ?></p>
 <?php endif; ?>
 <p class="btn"><a href="<?php echo esc_url( get_template_directory_uri() . "/press-assets/TUOUGM_IDIOTEQ_Press_Kit.pdf" ); ?>" download="TUOUGM_IDIOTEQ_Press_Kit.pdf" data-no-swup="">DOWNLOAD PDF</a></p>
+</div>
+</article>
+<article class="press-kit__resource">
+<div class="press-kit__resource-icon" aria-hidden="true"><svg viewBox="0 0 48 56" focusable="false"><path d="M8 2h21l11 11v41H8z"/><path d="M29 2v12h11M14 31h20M14 38h20M14 45h13"/><path d="M5 24h38v15H5z" class="press-kit__resource-icon-label"/><text x="24" y="35" text-anchor="middle">PDF</text></svg></div>
+<div class="press-kit__resource-content">
+<p class="press-kit__resource-number">03</p>
+<h4 class="press-kit__resource-title">Du Japon à la France, et retour</h4>
+<p class="press-kit__resource-summary">37 ans de musique underground, d’esprit DIY et de chaos plastique</p>
+<?php if ( false !== $press_kit_03_bytes ) : ?>
+<p class="press-kit__resource-meta">French · PDF · 6 pages · <?php echo esc_html( number_format_i18n( $press_kit_03_bytes / 1000000, 2 ) . " MB" ); ?></p>
+<?php endif; ?>
+<p class="btn"><a href="<?php echo esc_url( get_template_directory_uri() . "/press-assets/TUOUGM_EKLEKTIK_Press_Kit.pdf" ); ?>" download="TUOUGM_EKLEKTIK_Press_Kit.pdf" data-no-swup="">DOWNLOAD PDF</a></p>
 </div>
 </article>
 </div>
